@@ -40,7 +40,7 @@ Attualemnte sapspud è installato su un sistema FreeBSD 11
 # INSTALLAZIONE
 Scaricare la release 1.0 di sapspid e copiarla in un path del server: /path/to/sapspid
 Modifucare i fole di configurazione locale:
-* `server_local.ini`. **NOTA non modificare il numero il parametro num_processes.** Per poter gestire correttamente il pool di connessioni in modalit multi threaded il processo deve essere 1 solo.
+* `server_local.ini`. **NOTA non modificare il parametro num_processes.** Per poter gestire correttamente il pool di connessioni in modalità multi thread num_processes deve essere uguale ad 1.
 * `jwtoken_local.ini`. Configurare corretatemnte i parametri di connessione al master ed allo slave DB. Nel caso in cui si disponga di una sola istanza di PostgreSQL utilizzare le stesse configurazini sia per il Matser che per lo Slave. **NOTA max_conn deve essere uguale a min_conn per poter utulizzare correttaemnte le PREPARED STATEMENTS**
 * `easyspid_local.ini`. Configurare corretatemnte i parametri di connessione al master ed allo slave DB. Nel caso in cui si disponga di una sola istanza di PostgreSQL utilizzare le stesse configurazini sia per il Matser che per lo Slave. **NOTA max_conn deve essere uguale a min_conn per poter utulizzare correttaemnte le PREPARED STATEMENTS**
 * `logging_local.ini`
@@ -59,4 +59,6 @@ Le impostazioni del service provider si trovano nelle tabelle:
 Le impostazioni degli Idp si trovano nelle tabelle:
 * [providers](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
 * [metadata](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/metadata.html). Copiare nella colonnna xml il metadata dell'Identity Provider
-
+# Swagger
+Il file swagger.json è accessibile da:
+[swagger.json](http://spid.uniroma1.it/api/doc/swagger.json)
