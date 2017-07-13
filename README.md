@@ -46,3 +46,8 @@ Le impostazioni del service provider si trovano nelle tabelle:
 * [settings](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/settings.html). Modifcarte i json delle colonne settings ed advanced_settings riposratndo i dati del service provider
 * [signatures](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/signatures.html). Inserire le chaivi pubbliche degli Idp e quelle pubbliche e private degli SP. Il sistema calcola utomaticamente le fingerprint in base fingerprintalg scelto.
 * [services](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/services.html). Inserire i relaystate per il service provider.
+## IdP settings
+Le impostazioni degli Idp si trovano nelle tabelle:
+* [providers](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
+* [metadata](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/metadata.html). Copiare nella colonnna xml il metadata dell'Identity Provider
+
