@@ -38,5 +38,11 @@ In particolare:
 * PostgreSQL PL/Python
 Attualemnte sapspud è installato su un sistema FreeBSD 11
 # CONFIGURAZIONE
-La configurazione di sapspid avviene modificando opportune tabelle del DB. 
-L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html)
+La configurazione di sapspid avviene modificando opportune tabelle del DB ed opportuni file dell'applicativo.
+L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
+## SP settings
+Le impostazioni del service provider si trovano nelle tabelle:
+* [providers](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
+* [settings](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/settings.html). Modifcarte i json delle colonne settings ed advanced_settings riposratndo i dati del service provider
+* [signatures](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/signatures.html). Inserire le chaivi pubbliche degli Idp e quelle pubbliche e private degli SP. Il sistema calcola utomaticamente le fingerprint in base fingerprintalg scelto.
+* [services](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/services.html). Inserire i relaystate per il service provider.
