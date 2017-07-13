@@ -38,14 +38,14 @@ In particolare:
 * PostgreSQL PL/Python
 Attualemnte sapspud è installato su un sistema FreeBSD 11
 # INSTALLAZIONE
-Scaricare la release 1.0 di sapspid e copiarla in un path del server: /path/to/spspid
+Scaricare la release 1.0 di sapspid e copiarla in un path del server: /path/to/sapspid
 Modifucare i fole di configurazione locale:
 * `server_local.ini`. **NOTA non modificare il numero il parametro num_processes.** Per poter gestire correttamente il pool di connessioni in modalit multi threaded il processo deve essere 1 solo.
 * `jwtoken_local.ini`. Configurare corretatemnte i parametri di connessione al master ed allo slave DB. Nel caso in cui si disponga di una sola istanza di PostgreSQL utilizzare le stesse configurazini sia per il Matser che per lo Slave. **NOTA max_conn deve essere uguale a min_conn per poter utulizzare correttaemnte le PREPARED STATEMENTS**
 * `easyspid_local.ini`. Configurare corretatemnte i parametri di connessione al master ed allo slave DB. Nel caso in cui si disponga di una sola istanza di PostgreSQL utilizzare le stesse configurazini sia per il Matser che per lo Slave. **NOTA max_conn deve essere uguale a min_conn per poter utulizzare correttaemnte le PREPARED STATEMENTS**
 * `logging_local.ini`
 Il comando per far partire sapspid è:
-> cd /path/to/spspid && python server.py -c server_local.py 
+> cd /path/to/sapspid && python server.py -c server_local.py 
 # CONFIGURAZIONE
 La configurazione di sapspid avviene modificando opportune tabelle del DB ed opportuni file dell'applicativo.
 L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
