@@ -36,4 +36,7 @@ In particolare:
 * defusedxml 0.5.0
 * PostgreSQL 9.6
 * PostgreSQL PL/Python
-Attualemnte sapspud è installato su un sistema FreeBSD 11.1
+Attualemnte sapspud è installato su un sistema FreeBSD 11
+# CONFIGURAZIONE
+La configurazione di sapspid avviene modificando opportune tabelle del DB. 
+L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html)
