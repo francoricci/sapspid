@@ -36,4 +36,4 @@ In particolare:
 * defusedxml 0.5.0
 * PostgreSQL 9.6
 * PostgreSQL PL/Python
-
+Attualemnte sapspud è installato su un sistema FreeBSD 11.1
