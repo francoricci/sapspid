@@ -37,6 +37,13 @@ In particolare:
 * PostgreSQL 9.6
 * PostgreSQL PL/Python
 Attualemnte sapspud è installato su un sistema FreeBSD 11
+# INSTALLAZIONE
+Scariacare la release 1.0 di sapspid e copiarla in un path del server: /path/to/spspid
+Modifucare i fole di configurazione locale:
+* `server_local.ini`
+* `jwtoken_local.ini`
+* `easyspid_local.ini`
+* `logging_local.ini`
 # CONFIGURAZIONE
 La configurazione di sapspid avviene modificando opportune tabelle del DB ed opportuni file dell'applicativo.
 L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
