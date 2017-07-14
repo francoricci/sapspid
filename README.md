@@ -76,3 +76,4 @@ Le impostazioni degli Idp si trovano nelle tabelle:
 # Swagger
 Il file swagger.json è accessibile da:
 [swagger.json](http://spid.uniroma1.it/api/doc/swagger.json)
+All'indirizzo http://spid.uniroma1.it/swagger-ui/index.html è disponibile l'iterfaccia di swagger
