@@ -54,7 +54,8 @@ Come esempio sono presenti i file di configurazione locale:
 * `logging_local.ini`
 Il comando per far partire sapspid è:
 > cd /path/to/sapspid && python server.py -c server_local.py
-Per FreeBSD  presente lo script sh che deve essere copitato in /usr/local/etc/rc.d per far partire il demone al boot del sistema.
+
+Per FreeBSD è disponibile lo script sh che deve essere copitato in /usr/local/etc/rc.d per far partire il demone al boot del sistema.
 ## DB
 Per creare il database di sapspid è necessaria la versione 9.6 di PostgreSQL e l'estensione `PL/Python` e l'estensione `uuid-ossp`.
 * Utilizzare lo script `sql/sapspid.sql` per creare e popolare il DB
