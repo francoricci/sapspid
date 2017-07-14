@@ -58,7 +58,7 @@ Per FreeBSD  presente lo script sh che deve essere copitato in /usr/local/etc/rc
 ## DB
 Per creare il database di sapspid è necessaria la versione 9.6 di PostgreSQL e l'estensione `PL/Python` e l'estensione `uuid-ossp`.
 * Utilizzare lo script `sql/sapspid.sql` per creare e popolare il DB
-L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
+L'intero schema del DB è consultabile in [DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
 
 # CONFIGURAZIONE
 La configurazione di sapspid avviene modificando opportune tabelle del DB ed opportuni file dell'applicativo.
