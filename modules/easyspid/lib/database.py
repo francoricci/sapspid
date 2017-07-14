@@ -45,6 +45,9 @@ class Database(object):
         self.stmts['get_idAssertion'] = {'sql':"PREPARE get_idAssertion (text) AS " \
                         "SELECT t1.* FROM saml.view_assertions as t1 where t1.\"ID_assertion\" = $1", 'pool':'slave'}
 
+        self.stmts['chk_idAssertion'] = {'sql':"PREPARE chk_idAssertion (text) AS " \
+                        "SELECT t1.* FROM saml.view_assertions as t1 where t1.\"ID_assertion\" = $1", 'pool':'slave'}
+
     # prepare statments for each connection pool
     def prepare_stmts(self):
         for key, value in self.stmts.items():

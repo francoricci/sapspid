@@ -728,9 +728,10 @@ class easyspidHandler(RequestHandler):
             ns = {'md0': OneLogin_Saml2_Constants.NS_SAMLP, 'md1': OneLogin_Saml2_Constants.NS_SAML}
             parsedResponse = xml.etree.ElementTree.fromstring(response)
             issuer = parsedResponse.find("md1:Issuer", ns)
+
             #idpEntityId = connSaml.get_provider_byentityid(issuer.text.strip())
-            idpEntityId = self.dbobjSaml.makeQuery("EXECUTE get_provider_byentityid(%s)",
-                        [issuer.text.strip()],type = self.dbobjSaml.stmts['get_provider_byentityid']['pool'])
+            idpEntityId = self.dbobjSaml.makeQuery("EXECUTE get_provider_byentityid(%s, %s)",
+                        [True, '{'+(issuer.text.strip())+'}'],type = self.dbobjSaml.stmts['get_provider_byentityid']['pool'])
 
             if idpEntityId['error'] == 0 and idpEntityId['result'] != None:
                 idp_metadata = idpEntityId['result']['xml']
