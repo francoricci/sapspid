@@ -51,9 +51,8 @@ Come esempi sono presenti i file di configurazione locale:
 Il comando per far partire sapspid è:
 > cd /path/to/sapspid && python server.py -c server_local.py 
 ## DB
-Per creare il database di sapspid è necessaria la versione 9.6 di PostgreSQL e l'estensione PL/Python.
-* Utilizzare lo script `makeDB.sql` per creare il DB
-* Utilizzare lo script `makeSchema.sql` per craeare gli schemi e popolare il DB.
+Per creare il database di sapspid è necessaria la versione 9.6 di PostgreSQL e l'estensione `PL/Python` e l'estensione `uuid-ossp`.
+* Utilizzare lo script `sql/sapspid.sql` per creare e popolare il DB
 # CONFIGURAZIONE
 La configurazione di sapspid avviene modificando opportune tabelle del DB ed opportuni file dell'applicativo.
 L'intero schema del DB è si trova [sapspid DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
