@@ -43,13 +43,14 @@ sapspid è un framework REST modulare basato su tornado. Il framework ha i file 
 I moduli necessari a sapspid sono: easyspid e jwtoken. Ogni modulo ha un filedi configrazione: `/path/to/sapspid/modules/jwtoken/conf` e
 `/path/to/sapspid/modules/easyspid/conf`
 ** NON modificare i file di configurazione globali ma creare file di configurazione locali**
-Come esempi sono presenti i file di configurazione locale:
+Come esempio sono presenti i file di configurazione locale:
 * `server_local.ini`. **NOTA non modificare il parametro num_processes.** Per poter gestire correttamente il pool di connessioni in modalità multi thread num_processes deve essere uguale ad 1.
 * `jwtoken_local.ini`. Configurare corretatemnte i parametri di connessione al master ed allo slave DB. Nel caso in cui si disponga di una sola istanza di PostgreSQL utilizzare le stesse configurazini sia per il Matser che per lo Slave. **NOTA max_conn deve essere uguale a min_conn per poter utulizzare correttaemnte le PREPARED STATEMENTS**
 * `easyspid_local.ini`. Configurare corretatemnte i parametri di connessione al master ed allo slave DB. Nel caso in cui si disponga di una sola istanza di PostgreSQL utilizzare le stesse configurazini sia per il Matser che per lo Slave. **NOTA max_conn deve essere uguale a min_conn per poter utulizzare correttaemnte le PREPARED STATEMENTS**
 * `logging_local.ini`
 Il comando per far partire sapspid è:
-> cd /path/to/sapspid && python server.py -c server_local.py 
+> cd /path/to/sapspid && python server.py -c server_local.py
+Per FreeBSD  presente lo script sh che deve essere copitato in /usr/local/etc/rc.d per far partire il demone al boot del sistema.
 ## DB
 Per creare il database di sapspid è necessaria la versione 9.6 di PostgreSQL e l'estensione `PL/Python` e l'estensione `uuid-ossp`.
 * Utilizzare lo script `sql/sapspid.sql` per creare e popolare il DB
