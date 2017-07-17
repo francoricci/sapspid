@@ -11,7 +11,6 @@ from lib.customException import ApplicationException
 import globalsObj
 import re
 import easyspid.lib.easyspid
-import jwtoken.lib.database
 import easyspid.lib.database
 from easyspid.lib.utils import Saml2_Settings
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
@@ -112,6 +111,7 @@ class easyspidHandler(RequestHandler):
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
             if response_obj.error.httpcode == 200 and binding == 'redirect':
+                self.writeLog(response_obj)
                 self.set_header('Content-Type', 'text/html; charset=UTF-8')
                 self.set_header('Location', response_obj.result.redirectTo)
                 self.set_status(303)
@@ -120,15 +120,19 @@ class easyspidHandler(RequestHandler):
                 return
 
             elif response_obj.error.httpcode == 200 and binding == 'post':
+                self.writeLog(response_obj)
                 self.set_header('Content-Type', 'text/html; charset=UTF-8')
                 self.set_status(response_obj.error.httpcode)
                 self.write(response_obj.result.postTo)
                 self.finish()
                 return
 
-        self.set_status(response_obj.error.httpcode)
-        self.write(response_obj.jsonWrite())
-        self.finish()
+        # self.set_status(response_obj.error.httpcode)
+        # self.write(response_obj.jsonWrite())
+        # self.finish()
+
+        self.writeLog(response_obj)
+        self.writeResponse(response_obj)
 
     #@tornado.gen.coroutine
     async def post(self):
@@ -162,17 +166,55 @@ class easyspidHandler(RequestHandler):
             fut = self.executor.submit(self.processResponse, sp)
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
-        self.set_status(response_obj.error.httpcode)
-        self.write(response_obj.jsonWrite())
-        self.finish()
+        # self.set_status(response_obj.error.httpcode)
+        # self.write(response_obj.jsonWrite())
+        # self.finish()
+
+        self.writeLog(response_obj)
+        self.writeResponse(response_obj)
 
     def options(self):
         # no body
         self.set_status(204)
         self.finish()
 
+    def writeResponse(self, response_obj):
+
+        self.set_status(response_obj.error.httpcode)
+        self.write(response_obj.jsonWrite())
+        self.finish()
+
+    def writeLog(self, response_obj):
+        x_real_ip = self.request.headers.get("X-Real-IP")
+        remote_ip = x_real_ip or self.request.remote_ip
+
+        #insert log
+        if str(self.request.body, 'utf-8') == '':
+            body = None
+        else:
+            body = str(self.request.body, 'utf-8')
+
+        log_request = self.dbobjSaml.makeQuery("EXECUTE log_request(%s, %s, %s, %s)",
+                        [self.request.method,
+                         self.request.protocol + "://" + self.request.host + self.request.uri,
+                         body,
+                         remote_ip],
+                        type = self.dbobjSaml.stmts['log_request']['pool'], close = True, fetch=False)
+
+        log_response = self.dbobjSaml.makeQuery("EXECUTE log_response(%s, %s, %s, %s)",
+                        [response_obj.error.httpcode,
+                         self.request.protocol + "://" + self.request.host + self.request.uri,
+                         response_obj.jsonWrite(),
+                         remote_ip],
+                        type = self.dbobjSaml.stmts['log_response']['pool'], close = True, fetch=False)
+
+        return
+
     #@tornado.concurrent.run_on_executor
     def buildMetadata(self, sp, dbSave = True):
+        x_real_ip = self.request.headers.get("X-Real-IP")
+        remote_ip = x_real_ip or self.request.remote_ip
+
         try:
             """ This will be executed in `executor` pool. """
             #self.connSaml = easyspid.lib.database.Database(globalsObj.DbConnections['samlDbPollMaster']['pool'])
@@ -191,7 +233,7 @@ class easyspidHandler(RequestHandler):
                     #conn = easyspid.lib.database.Database(globalsObj.DbConnections['samlMasterdsn'])
                     #wrtMetada = self.connSaml.write_assertion(metadata, sp=sp, client=self.remote_ip, close = True)
                     wrtMetada = self.dbobjSaml.makeQuery("EXECUTE write_assertion(%s, %s, %s, %s)",
-                        [metadata, sp, None, self.remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
+                        [metadata, sp, None, remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
 
                     if wrtMetada['error'] == 0:
                         #jwt = self.connJwt.getTokenByCod(wrtMetada['result']['cod_token'], close = True)
@@ -344,14 +386,20 @@ class easyspidHandler(RequestHandler):
 
     def verifySpMetadata(self, sp):
         try:
-            """ This will be executed in `executor` pool. """
             #connSaml = easyspid.lib.database.Database(globalsObj.DbConnections['samlDbPollSlave']['pool'])
             #sp_settings = easyspid.lib.easyspid.spSettings(sp)
             sp_settings = easyspid.lib.easyspid.spSettings(sp, close = True)
 
             temp = RequestObjNew(self.request.body)
-            if temp.error["code"] > 0:
+            if temp.error["code"] == 2:
+                response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
+                response_obj.setError('400')
+                logging.getLogger(__name__).error('Validation error. Json input error')
+                return response_obj
+
+            elif temp.error["code"] > 0:
                 raise tornado.web.HTTPError(httpcode=503, log_message=temp.error["message"])
+
             metadata = temp.request['metadata']
 
             if sp_settings['error'] == 0 and sp_settings['result'] != None:
@@ -405,6 +453,7 @@ class easyspidHandler(RequestHandler):
         finally:
             logging.getLogger(__name__).warning('easyspid/verifySpMetadata handler executed')
 
+        response_obj.setID(temp.id)
         return response_obj
 
     def buildAthnReq(self, sp, idp, attributeIndex, binding, signed = True):
@@ -475,7 +524,7 @@ class easyspidHandler(RequestHandler):
                 #wrtAuthn = self.dbobjSaml.makeQuery("EXECUTE write_assertion(%s, %s, %s, %s)",
                 #        [authn_request_signed, sp, idp, self.remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
                 wrtAuthn = self.dbobjSaml.makeQuery("EXECUTE write_assertion(%s, %s, %s, %s)",
-                        [authn_request_signed, sp, idp, self.remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
+                        [authn_request_signed, sp, idp, remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
                 if wrtAuthn['error'] == 0:
                     #jwt = self.connJwt.getTokenByCod(wrtAuthn['result']['cod_token'], close=True)
                     jwt = self.dbobjJwt.makeQuery("EXECUTE get_token_by_cod(%s)",
@@ -527,7 +576,13 @@ class easyspidHandler(RequestHandler):
             prvd_settings = easyspid.lib.easyspid.spSettings(provider, close = True)
 
             temp = RequestObjNew(self.request.body)
-            if temp.error["code"] > 0:
+            if temp.error["code"] == 2:
+                response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
+                response_obj.setError('400')
+                logging.getLogger(__name__).error('Validation error. Json input error')
+                return response_obj
+
+            elif temp.error["code"] > 0:
                 raise tornado.web.HTTPError(httpcode=503, log_message=temp.error["message"])
 
             authn_request_signed = temp.request['authnrequest']
@@ -579,6 +634,7 @@ class easyspidHandler(RequestHandler):
         finally:
             logging.getLogger(__name__).warning('easyspid/verifyAuthnRequest handler executed')
 
+        response_obj.setID(temp.id)
         return response_obj
 
     def loginAuthnReq(self, sp, idp, attributeIndex, binding, srelay_cod):
@@ -756,7 +812,7 @@ class easyspidHandler(RequestHandler):
                 ## insert response into DB
                 #wrtAuthn = connSaml.write_assertion(str(response,'utf-8'), sp, idp, client=self.remote_ip)
                 wrtAuthn = self.dbobjSaml.makeQuery("EXECUTE write_assertion(%s, %s, %s, %s)",
-                        [str(response,'utf-8'), sp, idp, self.remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
+                        [str(response,'utf-8'), sp, idp, remote_ip],type = self.dbobjSaml.stmts['write_assertion']['pool'], close = True)
                 if wrtAuthn['error'] == 0:
                     #jwt = connJwt.getTokenByCod(wrtAuthn['result']['cod_token'])
                     jwt = self.dbobjJwt.makeQuery("EXECUTE get_token_by_cod(%s)",
@@ -790,7 +846,7 @@ class easyspidHandler(RequestHandler):
                 elif len(chk['validate']) == 0 and chk['signCheck']:
                     response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result']['ID_assertion'])
                     response_obj.setError('200')
-                    response_obj.setResult(responseValidate = chk)
+                    #response_obj.setResult(responseValidate = chk)
 
                 OneLoginResponse = OneLogin_Saml2_Response(prvdSettings, responsePost)
 
@@ -826,17 +882,17 @@ class easyspidHandler(RequestHandler):
                 if inResponseChk['error'] == 0 and inResponseChk['result'] == None:
                     response_obj = ResponseObj(httpcode=401)
                     response_obj.setError('easyspid110')
-                    #return response_obj
+                    return response_obj
 
                 #get all attributes
                 attributes = OneLoginResponse.get_attributes()
-                idAssertion = OneLoginResponse.document.get('ID', None)
+                #idAssertion = OneLoginResponse.document.get('ID', None)
                 #assertionData = connSaml.chk_idAssertion(idAssertion)
-                assertionData = self.dbobjSaml.makeQuery("EXECUTE chk_idAssertion(%s)",
-                        [idAssertion],type = self.dbobjSaml.stmts['chk_idAssertion']['pool'], close = True)
+                #assertionData = self.dbobjSaml.makeQuery("EXECUTE chk_idAssertion(%s)",
+                #        [idAssertion],type = self.dbobjSaml.stmts['chk_idAssertion']['pool'], close = True)
                 response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result']['ID_assertion'])
                 response_obj.setError('200')
-                response_obj.setResult(attributes = attributes, jwt = assertionData['result']['token'],
+                response_obj.setResult(attributes = attributes, jwt = jwt['result']['token'], responseValidate = chk,
                                        response = str(response, 'utf-8'), responseBase64 = responsePost)
 
             elif sp_settings['error'] == 0 and sp_settings['result'] == None:

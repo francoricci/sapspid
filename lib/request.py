@@ -1,6 +1,8 @@
 #import jsonlib2
 import logging
 import jsonpickle
+import jsonschema
+import globalsObj
 #import tornado.web
 
 class Request(object):
@@ -35,11 +37,17 @@ class RequestObjNew(object):
     Il nodo `request` contiente il json che deve essere convertito nella classe Python
     """
     def __init__(self, json):
-        #self.error = {"error":{"message":'', "code": 0}}
         self.error = {"message":'', "code": 0}
-        self.json = json
-        self.jsonRead()
 
+        # validate request
+        try:
+            jsonschema.validate(jsonpickle.decode(json), globalsObj.jsonReqSchema)
+            self.json = json
+            self.jsonRead()
+
+        except jsonschema.ValidationError as error:
+            logging.getLogger(__name__).error('Validation error. Json input error')
+            self.error = {"message":error.message, "code": 2}
 
     """
     Il metodo accetta in input la classe target nella quale sara' mappato il json della richiesta.

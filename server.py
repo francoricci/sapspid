@@ -37,7 +37,10 @@ Parse configuration files
 globalsObj.rootFolder = os.path.dirname(os.path.realpath(__file__))+'/'
 globalsObj.options = commonlib.commandLine(globalsObj.CONFIG_FILE_PATH)
 globalsObj.configuration = commonlib.configure(globalsObj.CONFIG_FILE_PATH, globalsObj.options.filename)
-logging.config.fileConfig(fname=(path+'/'+globalsObj.configuration.get('logging','conf')),disable_existing_loggers=False)
+try:
+    logging.config.fileConfig(fname=(path+'/'+globalsObj.configuration.get('logging','conf')),disable_existing_loggers=False)
+except:
+    logging.config.fileConfig(fname=(globalsObj.configuration.get('logging','conf')),disable_existing_loggers=False)
 globalsObj.ws_configuration = commonlib.configure(globalsObj.configuration.get('wspath','conf'))
 globalsObj.errors_configuration = commonlib.configure(globalsObj.configuration.get('errors','conf'))
 

@@ -61,9 +61,32 @@ class jwtokenHandler(RequestHandler):
             fut = self.executor.submit(self.verify)
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
-        self.set_status(response_obj.error.httpcode)
-        self.write(response_obj.jsonWrite())
-        self.finish()
+        #insert log
+        # if str(self.request.body, 'utf-8') == '':
+        #     jsonRequest = None
+        # else:
+        #     jsonRequest = str(self.request.body, 'utf-8')
+        #
+        # log_request = self.dbobjJwt.makeQuery("EXECUTE log_request(%s, %s, %s, %s)",
+        #                 [self.request.method,
+        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
+        #                  jsonRequest,
+        #                  self.request.remote_ip],
+        #                 type = self.dbobjJwt.stmts['log_request']['pool'], close = True, fetch=False)
+        #
+        # log_response = self.dbobjJwt.makeQuery("EXECUTE log_response(%s, %s, %s, %s)",
+        #                 [response_obj.error.httpcode,
+        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
+        #                  response_obj.jsonWrite(),
+        #                  self.request.remote_ip],
+        #                 type = self.dbobjJwt.stmts['log_response']['pool'], close = True, fetch=False)
+        #
+        # self.set_status(response_obj.error.httpcode)
+        # self.write(response_obj.jsonWrite())
+        # self.finish()
+
+        self.writeLog(response_obj)
+        self.writeResponse(response_obj)
 
     #@tornado.gen.coroutine
     async def post(self):
@@ -74,14 +97,69 @@ class jwtokenHandler(RequestHandler):
             fut = self.executor.submit(self.verify)
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
-        self.set_status(response_obj.error.httpcode)
-        self.write(response_obj.jsonWrite())
-        self.finish()
+        #insert log
+        # if str(self.request.body, 'utf-8') == '':
+        #     jsonRequest = None
+        # else:
+        #     jsonRequest = str(self.request.body, 'utf-8')
+        #
+        # log_request = self.dbobjJwt.makeQuery("EXECUTE log_request(%s, %s, %s, %s)",
+        #                 [self.request.method,
+        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
+        #                  jsonRequest,
+        #                  self.request.remote_ip],
+        #                 type = self.dbobjJwt.stmts['log_request']['pool'], close = True, fetch=False)
+        #
+        # log_response = self.dbobjJwt.makeQuery("EXECUTE log_response(%s, %s, %s, %s)",
+        #                 [response_obj.error.httpcode,
+        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
+        #                  response_obj.jsonWrite(),
+        #                  self.request.remote_ip],
+        #                 type = self.dbobjJwt.stmts['log_response']['pool'], close = True, fetch=False)
+        #
+        # self.set_status(response_obj.error.httpcode)
+        # self.write(response_obj.jsonWrite())
+        # self.finish()
+
+        self.writeLog(response_obj)
+        self.writeResponse(response_obj)
 
     def options(self):
         # no body
         self.set_status(204)
         self.finish()
+
+    def writeResponse(self, response_obj):
+
+        self.set_status(response_obj.error.httpcode)
+        self.write(response_obj.jsonWrite())
+        self.finish()
+
+    def writeLog(self, response_obj):
+        x_real_ip = self.request.headers.get("X-Real-IP")
+        remote_ip = x_real_ip or self.request.remote_ip
+
+        #insert log
+        if str(self.request.body, 'utf-8') == '':
+            body = None
+        else:
+            body = str(self.request.body, 'utf-8')
+
+        log_request = self.dbobjJwt.makeQuery("EXECUTE log_request(%s, %s, %s, %s)",
+                        [self.request.method,
+                         self.request.protocol + "://" + self.request.host + self.request.uri,
+                         body,
+                         remote_ip],
+                        type = self.dbobjJwt.stmts['log_request']['pool'], close = True, fetch=False)
+
+        log_response = self.dbobjJwt.makeQuery("EXECUTE log_response(%s, %s, %s, %s)",
+                        [response_obj.error.httpcode,
+                         self.request.protocol + "://" + self.request.host + self.request.uri,
+                         response_obj.jsonWrite(),
+                         remote_ip],
+                        type = self.dbobjJwt.stmts['log_response']['pool'], close = True, fetch=False)
+
+        return
 
     #@tornado.concurrent.run_on_executor
     def getByType(self):
@@ -144,8 +222,15 @@ class jwtokenHandler(RequestHandler):
                 # leggi il json della richiesta
                 temp = RequestObjNew(self.request.body)
 
-                if temp.error["code"] > 0:
+                if temp.error["code"] == 2:
+                    response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
+                    response_obj.setError('400')
+                    logging.getLogger(__name__).error('Validation error. Json input error')
+                    return response_obj
+
+                elif temp.error["code"] > 0:
                     raise tornado.web.HTTPError(httpcode=503, log_message=temp.error["message"])
+
                 token = temp.request['token']
 
             #verifica = connJwt.verifyToken(token)
@@ -191,4 +276,6 @@ class jwtokenHandler(RequestHandler):
         finally:
             logging.getLogger(__name__).warning('jwt/verify handler executed')
 
+        if  self.request.method == 'POST':
+            response_obj.setID(temp.id)
         return response_obj

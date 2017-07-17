@@ -6,6 +6,7 @@ import tornado.web
 #import ujson
 #import simplejson
 import jsonpickle
+import uuid
 
 
 class Result(object):
@@ -40,12 +41,12 @@ class Error(object):
 
 
 class ResponseObj(object):
-    def __init__(self, ID=None, **kwargs):
+    def __init__(self, ID = None, **kwargs):
         #self.rootLogger = logging.getLogger('root')
         self.apiVersion = globalsObj.configuration.get('version','version')
         self.error = None
         self.result = None
-        self.id = ID
+        self.setID(ID)
         self.error = Error(**kwargs)
 
     def setResult(self, **kwargs):
@@ -57,6 +58,12 @@ class ResponseObj(object):
                 return True
             else:
                 return False
+
+    def setID(self, ID):
+        if ID is None or ID == "":
+            self.id = str(uuid.uuid4())
+        else:
+            self.id = ID
 
     def jsonWrite(self):
         try:

@@ -48,6 +48,14 @@ class Database(object):
         self.stmts['chk_idAssertion'] = {'sql':"PREPARE chk_idAssertion (text) AS " \
                         "SELECT t1.* FROM saml.view_assertions as t1 where t1.\"ID_assertion\" = $1", 'pool':'slave'}
 
+        self.stmts['log_request'] = {'sql':"PREPARE log_request (text, text, text, inet) AS " \
+                        "INSERT INTO log.requests (http_verb, url, request, client) VALUES ($1, $2, $3, $4)",
+                        'pool':'master'}
+
+        self.stmts['log_response'] = {'sql':"PREPARE log_response (text, text, text, inet) AS " \
+                        "INSERT INTO log.responses (http_code, url_origin, response, client) VALUES ($1, $2, $3, $4)",
+                        'pool':'master'}
+
     # prepare statments for each connection pool
     def prepare_stmts(self):
         for key, value in self.stmts.items():
@@ -255,7 +263,7 @@ class Database(object):
     #         self.close()
     #         return {'error':2, 'result':error}
     
-    def makeQuery(self, sql, sqlargs, type = 'master', close = True, conn = None):
+    def makeQuery(self, sql, sqlargs, type = 'master', close = True, conn = None, fetch = True):
         result = None
 
         try:
@@ -267,10 +275,11 @@ class Database(object):
 
             cur.execute(sql, sqlargs)
 
-            if cur.rowcount == 1:
-                result = cur.fetchone()
-            elif cur.rowcount > 1:
-                result = cur.fetchall()
+            if fetch:
+                if cur.rowcount == 1:
+                    result = cur.fetchone()
+                elif cur.rowcount > 1:
+                    result = cur.fetchall()
 
             conn.commit()
 
