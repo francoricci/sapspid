@@ -14,6 +14,7 @@ import logging.config
 from concurrent.futures import ThreadPoolExecutor
 #from tornado.platform.asyncio import AsyncIOMainLoop
 import jsonpickle as jsonpickle
+import re
 #import asyncpg
 #import asyncio
 
@@ -53,11 +54,28 @@ from handle import StaticHandler
 
 """
 modules handlers
+importa tutti i file che si trovano nelle cartelle handlers dei moduli
 """
+modules_to_import = list()
+with os.scandir(os.path.join(os.path.dirname(__file__), "modules")) as it:
+    for module in it:
+        if not module.name.startswith('.') and not module.name.startswith('_') and module.is_dir():
+            tmp  = {'from': module.name+'.handlers', 'import': list()}
+            with os.scandir(os.path.join(module.path, 'handlers')) as it2:
+                for module2 in it2:
+                    if not module2.name.startswith('.') and not module2.name.startswith('_') and module2.is_file():
+                        tmp['import'].append(re.sub(r'\.py$', '', module2.name))
+            tmp['import'] = ', '.join(tmp['import'])
+            modules_to_import.append(tmp)
+
+for module in modules_to_import:
+    exec("from %s import %s" % (module['from'], module['import']))
+    logging.getLogger(__name__).info("Loaded module %s" % module['from'])
+
 #from sample.handlers import samplehandler
-from httpClientAsync.handlers import httpClientAsyncHandler
-from jwtoken.handlers import jwtokenhandler
-from easyspid.handlers import easyspidhandler
+#from httpClientAsync.handlers import httpClientAsyncHandler
+#from jwtoken.handlers import jwtokenhandler
+#from easyspid.handlers import easyspidhandler
 
 class WebApp(tornado.web.Application):
     def __init__(self, configuration, ws_configuration):
@@ -76,6 +94,7 @@ class WebApp(tornado.web.Application):
                     temp = temp.strip(',')
                     urlTemp = "tornado.web.URLSpec(%s)" % (temp)
                     handlers.append(eval(urlTemp))
+                    logging.getLogger(__name__).info("Created API. %s" % temp)
 
             """ create web application """
             super(self.__class__, self).__init__(handlers,

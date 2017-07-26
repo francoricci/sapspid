@@ -39,8 +39,11 @@ class Database(object):
                         "INSERT INTO saml.assertions (assertion, cod_sp, cod_idp, client) VALUES ($1, $2, $3, $4) " \
                         "RETURNING cod_token, \"ID_assertion\"", 'pool':'master'}
 
-        self.stmts['get_services'] = {'sql':"PREPARE get_services (bool) AS " \
-                        "SELECT t1.* FROM saml.services as t1 where t1.active = $1 ORDER BY name ASC", 'pool':'slave'}
+        # self.stmts['get_services'] = {'sql':"PREPARE get_services (bool) AS " \
+        #                 "SELECT t1.* FROM saml.services as t1 where t1.active = $1 ORDER BY name ASC", 'pool':'slave'}
+
+        self.stmts['get_service'] = {'sql':"PREPARE get_service (bool, text) AS " \
+                        "SELECT t1.* FROM saml.services as t1 where t1.active = $1 and t1.cod_service = $2", 'pool':'slave'}
 
         self.stmts['get_idAssertion'] = {'sql':"PREPARE get_idAssertion (text) AS " \
                         "SELECT t1.* FROM saml.view_assertions as t1 where t1.\"ID_assertion\" = $1", 'pool':'slave'}
@@ -55,6 +58,10 @@ class Database(object):
         self.stmts['log_response'] = {'sql':"PREPARE log_response (text, text, text, inet) AS " \
                         "INSERT INTO log.responses (http_code, url_origin, response, client) VALUES ($1, $2, $3, $4)",
                         'pool':'master'}
+
+        self.stmts['get_signature'] = {'sql':"PREPARE get_signature (text) AS " \
+                        "SELECT * FROM saml.signatures WHERE cod_provider = $1",
+                        'pool':'slave'}
 
     # prepare statments for each connection pool
     def prepare_stmts(self):
@@ -88,181 +95,6 @@ class Database(object):
         elif type == 'slave':
             self.pool2.putconn(conn)
 
-    # def get_sp_settings(self, cod_sp, close = True):
-    #
-    #     try:
-    #         cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #         cur.execute("SELECT t1.*, t2.public_key, t2.private_key, t2.fingerprint, t2.fingerprintalg  FROM saml.settings as t1 "
-    #                     "LEFT JOIN saml.signatures as t2 on t2.cod_provider = t1.cod_provider "
-    #                     "where t1.cod_provider = %s and t1.active = TRUE LIMIT 1", [cod_sp])
-    #
-    #         result = cur.fetchone()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    #
-    # def get_prvd_metadta(self, cod_sp, close = True):
-    #
-    #     cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #
-    #     try:
-    #         cur.execute("SELECT t1.*, t2.public_key, t2.private_key, t2.fingerprint, t2.fingerprintalg  FROM saml.metadata as t1 "
-    #                     "LEFT JOIN saml.signatures as t2 on t2.cod_provider = t1.cod_provider "
-    #                     "where t1.cod_provider = %s and t1.active = TRUE LIMIT 1", [cod_sp])
-    #
-    #         result = cur.fetchone()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    #
-    # def get_providers(self, active = True, close = True):
-    #     cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #
-    #     try:
-    #         cur.execute("SELECT t1.* FROM saml.providers as t1 where t1.active = %s ORDER BY name ASC", [active])
-    #         result = cur.fetchall()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    #
-    # def get_provider_byentityid(self, entityid, active = True, close = True):
-    #     cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #
-    #     try:
-    #         cur.execute("SELECT t1.* FROM saml.metadata as t1 where t1.active = %s "
-    #             "and cast(xpath('/md1:EntityDescriptor/@entityID', \"xml\", ARRAY[ARRAY['md1', 'urn:oasis:names:tc:SAML:2.0:metadata']]) as text) = %s"
-    #             "ORDER BY cod_provider ASC", [active, '{'+entityid+'}'])
-    #
-    #         result = cur.fetchone()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    #
-    # def write_assertion(self, assertion, sp = None, idp=None, client = None, close = True):
-    #     cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #
-    #     try:
-    #         cur.execute("INSERT INTO saml.assertions (assertion, cod_sp, cod_idp, client) VALUES (%s, %s, %s, %s) "
-    #                     "RETURNING cod_token, \"ID_assertion\"", [assertion, sp, idp, client])
-    #
-    #         result = cur.fetchone()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    #
-    # def get_services(self, cod_service, active = True, close = True):
-    #     cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #
-    #     try:
-    #         cur.execute("SELECT t1.* FROM saml.services as t1 where t1.active = %s ORDER BY name ASC", [active])
-    #
-    #         result = cur.fetchone()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    #
-    # def chk_idAssertion(self, uid, close = True):
-    #     cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    #
-    #     try:
-    #         cur.execute("SELECT t1.* FROM saml.view_assertions as t1 where t1.\"ID_assertion\" = %s", [uid])
-    #
-    #         result = cur.fetchone()
-    #         self.conn.commit()
-    #
-    #         if close:
-    #             self.close()
-    #
-    #         return {'error':0, 'result':result}
-    #
-    #     except psycopg2.InternalError as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':1, 'result':error}
-    #
-    #     except psycopg2.Error as error:
-    #         self.conn.commit()
-    #         self.close()
-    #         return {'error':2, 'result':error}
-    
     def makeQuery(self, sql, sqlargs, type = 'master', close = True, conn = None, fetch = True):
         result = None
 

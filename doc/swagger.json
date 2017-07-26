@@ -1,19 +1,19 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.0",
+    "version": "1.4",
     "title": "SP Spid",
-    "description": "SPID gateway. API to easly work with SPID",
+    "description": "SPID gateway. API to easily work with SPID",
     "license": {
       "name": "MIT",
       "url": "https://opensource.org/licenses/MIT"
     },
     "contact": {
-      "email": "franco.ricci@uniroma1.it"
+      "email": "franco.ricc@gmail.com"
     }
   },
   "host": "spid.uniroma1.it",
-  "basePath": "/",
+  "basePath": "/api",
   "tags": [
     {
       "name": "jwt",
@@ -39,7 +39,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/version": {
+    "/version": {
       "get": {
         "description": "get api version",
         "summary": "version",
@@ -61,7 +61,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/version"
+              "uri": "/version"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -85,7 +85,7 @@
         }
       }
     },
-    "/api/jwt/getByType": {
+    "/jwt/getByType": {
       "get": {
         "description": "Encode a jwt token specifying a token type as in jwt.token_type table",
         "summary": "Encode a jwt token of type specified",
@@ -145,7 +145,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/jwt/getByType?type=jwt1"
+              "uri": "/jwt/getByType?type=jwt1"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -169,7 +169,7 @@
         }
       }
     },
-    "/api/jwt/verify": {
+    "/jwt/verify": {
       "get": {
         "description": "Check validity of jwt token",
         "summary": "verify token",
@@ -223,7 +223,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/jwt/verify?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJTZXJ2aWNlIFByb3ZpZGVycyB1c2luZyBFYXN5U1BJRCBBUEkiLCJleHAiOjE0OTQ0MzczNTMsImlhdCI6MTQ5NDQzNjE1MywiaXNzIjoiRWFzeVNQSUQgZ2F0ZXdheSIsImp0aSI6ImFhZmFlNmUzLTcwNjgtNDJkMy1hMzBlLWM1YmY0NjA2ZWUzOSIsIm5iZiI6MTQ5NDQzNjE1Mywic3ViIjoiQWNjZXNzIHRvIEVhc3lTUElEIEFQSSJ9.Ls5nY-fApQUnacXSRDvX9yv-zgOUWADGIdeB3ZRdHQ4"
+              "uri": "/jwt/verify?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJTZXJ2aWNlIFByb3ZpZGVycyB1c2luZyBFYXN5U1BJRCBBUEkiLCJleHAiOjE0OTQ0MzczNTMsImlhdCI6MTQ5NDQzNjE1MywiaXNzIjoiRWFzeVNQSUQgZ2F0ZXdheSIsImp0aSI6ImFhZmFlNmUzLTcwNjgtNDJkMy1hMzBlLWM1YmY0NjA2ZWUzOSIsIm5iZiI6MTQ5NDQzNjE1Mywic3ViIjoiQWNjZXNzIHRvIEVhc3lTUElEIEFQSSJ9.Ls5nY-fApQUnacXSRDvX9yv-zgOUWADGIdeB3ZRdHQ4"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -315,7 +315,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/metadata": {
+    "/prvd/{cod_prvd}/metadata": {
       "get": {
         "description": "Get provider metadat stored in saml.metadata table",
         "summary": "get provider metadata",
@@ -330,7 +330,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Provider code. To get provider codes use /api/prvd service.",
+            "description": "Provider code. To get provider codes use /prvd service.",
             "required": true,
             "type": "string"
           }
@@ -369,7 +369,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/prvd/{cod_prvd}/metadata"
+              "uri": "/prvd/{cod_prvd}/metadata"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -393,7 +393,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/metadata/verify": {
+    "/prvd/{cod_prvd}/metadata/verify": {
       "post": {
         "description": "verify metadata validity",
         "summary": "verify metadata signature and xml schema",
@@ -408,7 +408,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Provider code. To get provider codes use /api/prvd service.",
+            "description": "Provider code. To get provider codes use /prvd service.",
             "required": true,
             "type": "string"
           },
@@ -477,7 +477,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/metadata/build": {
+    "/prvd/{cod_prvd}/metadata/build": {
       "get": {
         "description": "build service provider metadata",
         "summary": "build service provider meta data based on settings in saml.settings table and saml.signature data",
@@ -492,7 +492,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Service provider code. To get provider codes use /api/prvd service.",
+            "description": "Service provider code. To get provider codes use /prvd service.",
             "required": true,
             "type": "string"
           }
@@ -531,7 +531,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/prvd/sapienza/metadata/build"
+              "uri": "/prvd/sapienza/metadata/build"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -555,7 +555,7 @@
         }
       }
     },
-    "/api/prvd": {
+    "/prvd": {
       "get": {
         "description": "get list of providers",
         "summary": "get list of providers in saml.providers table",
@@ -601,7 +601,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/prvd"
+              "uri": "/prvd"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -625,7 +625,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/authnreq/build": {
+    "/prvd/{cod_prvd}/authnreq/build": {
       "get": {
         "description": "build athentication request",
         "summary": "build authentication request for sp specified",
@@ -640,7 +640,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Service provider code. To get provider codes use /api/prvd service.",
+            "description": "Service provider code. To get provider codes use /prvd service.",
             "required": true,
             "type": "string"
           },
@@ -705,7 +705,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/prvd/sapienza/authnreq/build?idp=pt&attrindex=0&binding=redirect"
+              "uri": "/prvd/sapienza/authnreq/build?idp=pt&attrindex=0&binding=redirect"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -729,7 +729,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/authnreq/verify": {
+    "/prvd/{cod_prvd}/authnreq/verify": {
       "post": {
         "description": "verify authentication request validity",
         "summary": "verify authentication request signature and xml schema",
@@ -744,7 +744,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Provider code. To get provider codes use /api/prvd service.",
+            "description": "Provider code. To get provider codes use /prvd service.",
             "required": true,
             "type": "string"
           },
@@ -813,7 +813,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/authnreq/login": {
+    "/prvd/{cod_prvd}/authnreq/login": {
       "get": {
         "description": "build authentication request and send it to identity provider",
         "summary": "build authn request and send to idp",
@@ -828,7 +828,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Sp code. To get service provider codes use /api/prvd service.",
+            "description": "Sp code. To get service provider codes use /prvd service.",
             "required": true,
             "type": "string"
           },
@@ -897,7 +897,7 @@
           {
             "request": {
               "method": "GET",
-              "uri": "/api/prvd/uniroma1/authnreq/login?idp=pt&attrindex=0&binding=post&srelay=uniroma1_srelay1"
+              "uri": "/prvd/uniroma1/authnreq/login?idp=pt&attrindex=0&binding=post&srelay=uniroma1_srelay1"
             },
             "expectedResponse": {
               "x-allowExtraHeaders": true,
@@ -921,7 +921,7 @@
         }
       }
     },
-    "/api/prvd/{cod_prvd}/consume": {
+    "/prvd/{cod_prvd}/consume": {
       "post": {
         "description": "receive identity provider response, verify and parse it ",
         "summary": "receive idp response, verify and parse it",
@@ -939,7 +939,7 @@
           {
             "name": "cod_prvd",
             "in": "path",
-            "description": "Service Provider code. To get provider codes use /api/prvd service.",
+            "description": "Service Provider code. To get provider codes use /prvd service.",
             "required": true,
             "type": "string"
           },
@@ -1001,7 +1001,7 @@
           {
             "request": {
               "method": "POST",
-              "uri": "/api/prvd/uniroma1/consume",
+              "uri": "/prvd/uniroma1/consume",
               "headers": {
                 "Content-Type": "application/x-www-form-urlencoded"
               },
@@ -1021,6 +1021,67 @@
             "x-testDescription": "TODO: Add Description"
           }
         ],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/assertion/validate": {
+      "post": {
+        "description": "verify and validate saml assertions of type EntityDescriptor, Response, AuthnRequest",
+        "summary": "verify and validate saml assertions",
+        "tags": [
+          "misc"
+        ],
+        "operationId": "verify assertions",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/VerifyAssertionrequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "assertion OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/assertionChk"
+              }
+            }
+          },
+          "401": {
+            "description": "assertion not valid",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/assertionChk"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/APIresponse"
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-unitTests": [],
         "x-operation-settings": {
           "CollectParameters": false,
           "AllowDynamicQueryParameters": false,
@@ -1287,6 +1348,65 @@
       },
       "additionalProperties": false
     },
+    "assertionChk": {
+      "type": "object",
+      "required": [
+        "id",
+        "apiVersion",
+        "error",
+        "result"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "message",
+            "code",
+            "httpcode"
+          ],
+          "properties": {
+            "code": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 0
+            },
+            "httpcode": {
+              "type": "integer",
+              "minimum": 200,
+              "maximum": 200
+            },
+            "message": {
+              "type": "string",
+              "pattern": "^OK$",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "apiVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result": {
+          "type": "object",
+          "required": [
+            "assertionChk"
+          ],
+          "properties": {
+            "assertionChk": {
+              "type": "object",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "metadataBuild": {
       "type": "object",
       "required": [
@@ -1466,6 +1586,41 @@
           "properties": {
             "metadata": {
               "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "VerifyAssertionrequest": {
+      "title": "verify assertion Request",
+      "type": "object",
+      "required": [
+        "id",
+        "request",
+        "apiVersion"
+      ],
+      "properties": {
+        "id": {
+          "description": "",
+          "type": "string"
+        },
+        "apiVersion": {
+          "description": "",
+          "type": "string"
+        },
+        "request": {
+          "type": "object",
+          "required": [
+            "assertion",
+            "provider"
+          ],
+          "properties": {
+            "assertion": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string",
+              "description": "codice del provider. Può essere vuoto."
             }
           }
         }

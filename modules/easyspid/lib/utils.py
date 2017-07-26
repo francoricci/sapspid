@@ -4,11 +4,11 @@ from onelogin.saml2.metadata import OneLogin_Saml2_Metadata
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from onelogin.saml2.utils import OneLogin_Saml2_XML
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
-from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
+import easyspid.lib.easyspid
 import xml.etree.ElementTree
-import xmlsec
+from lxml import etree
 from onelogin.saml2 import compat
-import logging
+#import logging
 
 
 class Saml2_Settings(OneLogin_Saml2_Settings):
@@ -211,23 +211,30 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
         :returns: a dictionary with the list of found validation errors and signature check
         :rtype: dict
         """
+        result = {'schemaValidate':True, 'signCheck':False, 'error':0, 'msg':''}
 
         assert isinstance(xml, compat.text_types)
 
         if len(xml) == 0:
             raise Exception('Empty string supplied as input')
 
-        errors = {'validate':[], 'signCheck':0}
+        #errors = {'validate':[], 'signCheck':0}
         root = OneLogin_Saml2_XML.validate_xml(xml, 'saml-schema-metadata-2.0.xsd', self._OneLogin_Saml2_Settings__debug)
         if isinstance(root, str):
-            #errors.append(root)
-            errors['validate'].append(root)
+            result['msg'] = root
+            result['schemaValidate'] = False
         else:
             if root.tag != '{%s}EntityDescriptor' % OneLogin_Saml2_Constants.NS_MD:
-                errors.append('noEntityDescriptor_xml')
+                result['msg'] = 'noEntityDescriptor_xml'
+                result['error'] = 1
+                result['schemaValidate'] = False
+                #errors.append('noEntityDescriptor_xml')
             else:
                 if (len(root.findall('.//md:SPSSODescriptor', namespaces=OneLogin_Saml2_Constants.NSMAP))) != 1:
-                    errors.append('onlySPSSODescriptor_allowed_xml')
+                    #errors.append('onlySPSSODescriptor_allowed_xml')
+                    result['msg'] = 'onlySPSSODescriptor_allowed_xml'
+                    result['error'] = 2
+                    result['schemaValidate'] = False
                 else:
                     valid_until, cache_duration = root.get('validUntil'), root.get('cacheDuration')
 
@@ -235,108 +242,246 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
                         valid_until = OneLogin_Saml2_Utils.parse_SAML_to_time(valid_until)
                     expire_time = OneLogin_Saml2_Utils.get_expire_time(cache_duration, valid_until)
                     if expire_time is not None and int(time()) > int(expire_time):
-                        errors.append('expired_xml')
+                        #errors.append('expired_xml')
+                        result['msg'] = 'expired_xml'
+                        result['error'] = 3
+                        result['schemaValidate'] = False
 
         # Validate Sign
         signCheck = OneLogin_Saml2_Utils.validate_metadata_sign(xml, fingerprint=fingerprint,
                         fingerprintalg=fingerprintalg, validatecert=validatecert)
         if signCheck:
-            errors['signCheck'] = 1
+            result['signCheck'] = True
 
-        return errors
+        return result
 
-    def validate_authnreq_sign(self, xml, fingerprint=None, fingerprintalg='sha1', validatecert=False, debug=False):
-        """
-        Validates a signature of a EntityDescriptor.
+    # def validate_authnreq_sign(self, xml, fingerprint=None, fingerprintalg='sha1', validatecert=False, debug=False):
+    #     """
+    #     Validates a signature of a EntityDescriptor.
+    #
+    #     :param xml: The element we should validate
+    #     :type: string | Document
+    #
+    #     :param fingerprint: The fingerprint of the public cert
+    #     :type: string
+    #
+    #     :param fingerprintalg: The algorithm used to build the fingerprint
+    #     :type: string
+    #
+    #     :param validatecert: If true, will verify the signature and if the cert is valid.
+    #     :type: bool
+    #
+    #     :param debug: Activate the xmlsec debug
+    #     :type: bool
+    #
+    #     :param raise_exceptions: Whether to return false on failure or raise an exception
+    #     :type raise_exceptions: Boolean
+    #     """
+    #     assert isinstance(xml, compat.text_types)
+    #
+    #     if len(xml) == 0:
+    #         raise Exception('Empty string supplied as input')
+    #
+    #     errors = {'validate':[], 'signCheck':0}
+    #     root = OneLogin_Saml2_XML.validate_xml(xml, 'saml-schema-protocol-2.0.xsd', self._OneLogin_Saml2_Settings__debug)
+    #     if isinstance(root, str):
+    #         errors['validate'].append(root)
+    #
+    #     # check signature
+    #     signatureNodeXpath = '/samlp:AuthnRequest/ds:Signature'
+    #     if fingerprint is None:
+    #         fingerprint = self._OneLogin_Saml2_Settings__sp['x509cert_fingerprint']
+    #
+    #     if fingerprintalg is None:
+    #         fingerprintalg = self._OneLogin_Saml2_Settings__sp['x509cert_fingerprintalg']
+    #
+    #     signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=None, fingerprint=fingerprint,
+    #         fingerprintalg=fingerprintalg, validatecert=validatecert, debug=debug, xpath=signatureNodeXpath, multicerts=None)
+    #
+    #     if signCheck:
+    #         errors['signCheck'] = 1
+    #
+    #     return errors
 
-        :param xml: The element we should validate
-        :type: string | Document
+    # def validate_response_sign(self, xml, fingerprint=None, fingerprintalg='sha1', validatecert=False, debug=False):
+    #     """
+    #     Validates a signature of a EntityDescriptor.
+    #
+    #     :param xml: The element we should validate
+    #     :type: string | Document
+    #
+    #     :param fingerprint: The fingerprint of the public cert
+    #     :type: string
+    #
+    #     :param fingerprintalg: The algorithm used to build the fingerprint
+    #     :type: string
+    #
+    #     :param validatecert: If true, will verify the signature and if the cert is valid.
+    #     :type: bool
+    #
+    #     :param debug: Activate the xmlsec debug
+    #     :type: bool
+    #
+    #     :param raise_exceptions: Whether to return false on failure or raise an exception
+    #     :type raise_exceptions: Boolean
+    #     """
+    #     assert isinstance(xml, compat.text_types)
+    #
+    #     if len(xml) == 0:
+    #         raise Exception('Empty string supplied as input')
+    #
+    #     errors = {'validate':[], 'signCheck':0}
+    #     root = OneLogin_Saml2_XML.validate_xml(xml, 'saml-schema-protocol-2.0.xsd', self._OneLogin_Saml2_Settings__debug)
+    #     if isinstance(root, str):
+    #         errors['validate'].append(root)
+    #
+    #     # check signature
+    #     #signatureNodeXpath = '/samlp:AuthnRequest/ds:Signature'
+    #     if fingerprint is None:
+    #         fingerprint = self._OneLogin_Saml2_Settings__idp['x509cert_fingerprint']
+    #
+    #     if fingerprintalg is None:
+    #         fingerprintalg = self._OneLogin_Saml2_Settings__idp['x509cert_fingerprintalg']
+    #
+    #     signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=None, fingerprint=fingerprint,
+    #         fingerprintalg=fingerprintalg, validatecert=validatecert, debug=debug, xpath=None, multicerts=None)
+    #
+    #     if signCheck:
+    #         errors['signCheck'] = 1
+    #
+    #     return errors
 
-        :param fingerprint: The fingerprint of the public cert
-        :type: string
+    # def validate_metadata_sign(xml, cert=None, fingerprint=None, fingerprintalg='sha1', validatecert=False, debug=False):
+    #     """
+    #     Validates a signature of a EntityDescriptor.
+    #
+    #     :param xml: The element we should validate
+    #     :type: string | Document
+    #
+    #     :param cert: The public cert
+    #     :type: string
+    #
+    #     :param fingerprint: The fingerprint of the public cert
+    #     :type: string
+    #
+    #     :param fingerprintalg: The algorithm used to build the fingerprint
+    #     :type: string
+    #
+    #     :param validatecert: If true, will verify the signature and if the cert is valid.
+    #     :type: bool
+    #
+    #     :param debug: Activate the xmlsec debug
+    #     :type: bool
+    #
+    #     :param raise_exceptions: Whether to return false on failure or raise an exception
+    #     :type raise_exceptions: Boolean
+    #     """
+    #     if xml is None or xml == '':
+    #         raise Exception('Empty string supplied as input')
+    #
+    #     elem = OneLogin_Saml2_XML.to_etree(xml)
+    #     xmlsec.enable_debug_trace(debug)
+    #     xmlsec.tree.add_ids(elem, ["ID"])
+    #
+    #     signature_nodes = OneLogin_Saml2_XML.query(elem, '/md:EntitiesDescriptor/ds:Signature')
+    #
+    #     if len(signature_nodes) == 0:
+    #         signature_nodes += OneLogin_Saml2_XML.query(elem, '/md:EntityDescriptor/ds:Signature')
+    #
+    #         if len(signature_nodes) == 0:
+    #             signature_nodes += OneLogin_Saml2_XML.query(elem, '/md:EntityDescriptor/md:SPSSODescriptor/ds:Signature')
+    #             signature_nodes += OneLogin_Saml2_XML.query(elem, '/md:EntityDescriptor/md:IDPSSODescriptor/ds:Signature')
+    #
+    #     if len(signature_nodes) > 0:
+    #         for signature_node in signature_nodes:
+    #             # Raises expection if invalid
+    #             OneLogin_Saml2_Utils.validate_node_sign(signature_node, elem, cert, fingerprint, fingerprintalg, validatecert, debug, raise_exceptions=True)
+    #         return True
+    #     else:
+    #         raise Exception('Could not validate metadata signature: No signature nodes found.')
 
-        :param fingerprintalg: The algorithm used to build the fingerprint
-        :type: string
 
-        :param validatecert: If true, will verify the signature and if the cert is valid.
-        :type: bool
+def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
 
-        :param debug: Activate the xmlsec debug
-        :type: bool
+    result = {'schemaValidate':False, 'signCheck':False, 'certValidity':False,
+              'certAllowed':True, 'error':0, 'msg':'', 'assertionName': None}
 
-        :param raise_exceptions: Whether to return false on failure or raise an exception
-        :type raise_exceptions: Boolean
-        """
-        assert isinstance(xml, compat.text_types)
+    assert isinstance(xml, compat.text_types)
 
-        if len(xml) == 0:
-            raise Exception('Empty string supplied as input')
+    if len(xml) == 0:
+        result['error'] = 1
+        result['msg'] = 'Empty string supplied as input'
+        return  result
 
-        errors = {'validate':[], 'signCheck':0}
-        root = OneLogin_Saml2_XML.validate_xml(xml, 'saml-schema-protocol-2.0.xsd', self._OneLogin_Saml2_Settings__debug)
-        if isinstance(root, str):
-            errors['validate'].append(root)
+    parsedassertion = etree.fromstring(xml)
 
-        # check signature
-        signatureNodeXpath = '/samlp:AuthnRequest/ds:Signature'
-        if fingerprint is None:
-            fingerprint = self._OneLogin_Saml2_Settings__sp['x509cert_fingerprint']
+    # assertion name path
+    assertionNameXpath = "local-name(/*)"
+    assertionName = parsedassertion.xpath(assertionNameXpath)
+    assertionName = str(assertionName)
 
-        if fingerprintalg is None:
-            fingerprintalg = self._OneLogin_Saml2_Settings__sp['x509cert_fingerprintalg']
+    # find assertion schema
+    if assertionName == 'EntityDescriptor':
+        asscertionShema  = 'saml-schema-metadata-2.0.xsd'
+    elif assertionName == 'Response':
+        asscertionShema  = 'saml-schema-protocol-2.0.xsd'
+    elif assertionName == 'AuthnRequest':
+        asscertionShema  = 'saml-schema-protocol-2.0.xsd'
+    else:
+        result['error'] = 2
+        result['msg'] = 'Assertion unknown'
+        return  result
 
-        signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=None, fingerprint=fingerprint,
-            fingerprintalg=fingerprintalg, validatecert=validatecert, debug=debug, xpath=signatureNodeXpath, multicerts=None)
+    # siganture node path
+    signatureNodeXpath = ".//*[local-name()='Signature']"
 
-        if signCheck:
-            errors['signCheck'] = 1
+    if assertionName == 'Response':
+        signatureNodeXpath = "*[local-name(/*)='Response']//*[local-name()='Signature']"
 
-        return errors
+    result['assertionName'] = assertionName
+    # get certificate signing
+    signingcert = easyspid.lib.easyspid.get_signature_cert(xml)
 
-    def validate_response_sign(self, xml, fingerprint=None, fingerprintalg='sha1', validatecert=False, debug=False):
-        """
-        Validates a signature of a EntityDescriptor.
+    # validate xml against its schema
+    schemaCheck = OneLogin_Saml2_XML.validate_xml(xml, asscertionShema, False)
+    if isinstance(schemaCheck, str):
+        result['msg'] = schemaCheck
+        result['schemaValidate'] = False
+    else:
+        result['schemaValidate'] = True
 
-        :param xml: The element we should validate
-        :type: string | Document
+    # check signature
+    signingfingerprintalg = 'sha1'
+    if fingerprintalg is not None:
+        signingfingerprintalg = fingerprintalg
 
-        :param fingerprint: The fingerprint of the public cert
-        :type: string
+    signingfingerprint = (easyspid.lib.easyspid.calcCertFingerprint(signingcert, signingfingerprintalg))['result']
 
-        :param fingerprintalg: The algorithm used to build the fingerprint
-        :type: string
+    if assertionName == 'EntityDescriptor' and fingerprint is None:
+        allowedCert = easyspid.lib.easyspid.get_metadata_allowed_cert(xml)
+        allowedfingerprint = (easyspid.lib.easyspid.calcCertFingerprint(allowedCert, signingfingerprintalg))['result']
 
-        :param validatecert: If true, will verify the signature and if the cert is valid.
-        :type: bool
+    elif assertionName != 'EntityDescriptor' and fingerprint is None:
+        allowedfingerprint = signingfingerprint
 
-        :param debug: Activate the xmlsec debug
-        :type: bool
+    if fingerprint is not None:
+        allowedfingerprint = fingerprint
 
-        :param raise_exceptions: Whether to return false on failure or raise an exception
-        :type raise_exceptions: Boolean
-        """
-        assert isinstance(xml, compat.text_types)
+    signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=signingcert, fingerprint=signingfingerprint,
+        fingerprintalg = signingfingerprintalg, validatecert=False, debug=False, xpath=signatureNodeXpath, multicerts=None)
 
-        if len(xml) == 0:
-            raise Exception('Empty string supplied as input')
+    if signCheck:
+        result['signCheck'] = True
 
-        errors = {'validate':[], 'signCheck':0}
-        root = OneLogin_Saml2_XML.validate_xml(xml, 'saml-schema-protocol-2.0.xsd', self._OneLogin_Saml2_Settings__debug)
-        if isinstance(root, str):
-            errors['validate'].append(root)
+    # checktime validity certificate
+    certTimeValdity = easyspid.lib.easyspid.timeValidateCert(signingcert)
+    if certTimeValdity:
+        result['certValidity'] = True
 
-        # check signature
-        #signatureNodeXpath = '/samlp:AuthnRequest/ds:Signature'
-        if fingerprint is None:
-            fingerprint = self._OneLogin_Saml2_Settings__idp['x509cert_fingerprint']
+    # checktime certificate allow
+    if allowedfingerprint != signingfingerprint:
+        result['certAllowed'] = False
 
-        if fingerprintalg is None:
-            fingerprintalg = self._OneLogin_Saml2_Settings__idp['x509cert_fingerprintalg']
+    return result
 
-        signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=None, fingerprint=fingerprint,
-            fingerprintalg=fingerprintalg, validatecert=validatecert, debug=debug, xpath=None, multicerts=None)
 
-        if signCheck:
-            errors['signCheck'] = 1
-
-        return errors

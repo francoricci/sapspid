@@ -4,6 +4,12 @@ import easyspid.lib.database
 from response import ResponseObj
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 import easyspid.lib.database
+import datetime
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from lxml import etree
+from hashlib import sha1, sha256, sha384, sha512
+import base64
 
 ESPID_ERRORS_FILE_PATH = "modules/easyspid/conf/errors.ini"
 ESPID_CONFIG_FILE_PATH = "modules/easyspid/conf/easyspid.ini"
@@ -21,6 +27,7 @@ easyspid_error_configuration = commonlib.configure(ESPID_ERRORS_FILE_PATH)
 globalsObj.easyspid_DbMaster_conf = dict(easyspid_file_configuration.items('DbMaster'))
 globalsObj.easyspid_DbSlave_conf = dict(easyspid_file_configuration.items('DbSlave'))
 globalsObj.easyspid_postFormPath = easyspid_file_configuration.get('AuthnRequest','postFormPath')
+globalsObj.easyspid_responseFormPath = easyspid_file_configuration.get('Response','responseFormPath')
 
 # istanzia tutte le sezioni degli errori nel file globalsObj
 for i, val in enumerate(easyspid_error_configuration.sections()):
@@ -162,3 +169,115 @@ def spSettings(cod_sp, cod_idp = None, close = True):
         result['result'] = sp_settings['result']
 
     return result
+
+def timeValidateCert(cert, date = datetime.datetime.now()):
+    try:
+        certByte = cert.encode(encoding='UTF-8')
+
+    except AttributeError:
+        certByte = cert
+
+    certDecode = x509.load_pem_x509_certificate(certByte, default_backend())
+
+    if certDecode.not_valid_before <= date and certDecode.not_valid_after >= date:
+        return True
+
+    else:
+        return False
+
+def get_metadata_allowed_cert(xmlData):
+        """
+        Get x509 cert of a saml metadata
+
+        :param xmlData: The element we should get certificate of
+        :type: string | Document
+
+        :param assertion: The assertion name we should get certificate of
+        :type: string | Document
+
+        """
+        if xmlData is None or xmlData == '':
+            raise Exception('Empty string supplied as input')
+
+        xpath = ".//*[local-name()='KeyDescriptor'][@use='signing']//*[local-name()='X509Certificate']"
+
+        parsedXml = etree.fromstring(xmlData)
+        cert_nodes = parsedXml.xpath(xpath)
+
+        if len(cert_nodes) > 0:
+            x509_cert = cert_nodes[0].text.replace('\x0D', '')
+            x509_cert = x509_cert.replace('\r', '')
+            x509_cert = x509_cert.replace('\n', '')
+            tmp = ("-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % x509_cert)
+            return  tmp
+
+        else:
+            raise Exception('Could not find any singning certificate')
+
+def get_signature_cert(xmlData):
+        """
+        Get x509 cert of a signature node
+
+        :param xmlData: The element we should validate
+        :type: string | Document
+
+        """
+        if xmlData is None or xmlData == '':
+            raise Exception('Empty string supplied as input')
+
+        parsedXml = etree.fromstring(xmlData)
+        cert_nodes = parsedXml.xpath(".//*[local-name()='Signature']//*[local-name()='X509Certificate']")
+
+        if len(cert_nodes) > 0:
+            x509_cert = cert_nodes[0].text.replace('\x0D', '')
+            x509_cert = x509_cert.replace('\r', '')
+            x509_cert = x509_cert.replace('\n', '')
+            tmp = ("-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % x509_cert)
+            return tmp
+
+        else:
+            raise Exception('Could not validate certificate: No Signatire node found.')
+
+def calcCertFingerprint(x509cert, alg):
+    result = {'error':0, 'result': None}
+
+    try:
+        lines = x509cert.split('\n')
+        data = ''
+
+        for line in lines:
+            # Remove '\r' from end of line if present.
+            line = line.rstrip()
+            if line == '-----BEGIN CERTIFICATE-----':
+                # Delete junk from before the certificate.
+                data = ''
+            elif line == '-----END CERTIFICATE-----':
+                # Ignore data after the certificate.
+                break
+            elif line == '-----BEGIN PUBLIC KEY-----' or line == '-----BEGIN RSA PRIVATE KEY-----':
+                # This isn't an X509 certificate.
+                return  ""
+            else:
+                # Append the current line to the certificate data.
+                data += line
+
+        decoded_data = base64.b64decode(str(data))
+
+        if alg == 'sha512':
+            fingerprint = sha512(decoded_data)
+        elif alg == 'sha384':
+            fingerprint = sha384(decoded_data)
+        elif alg == 'sha256':
+            fingerprint = sha256(decoded_data)
+        elif alg == None or alg == 'sha1':
+            fingerprint = sha1(decoded_data)
+        else:
+            result = {'error':1, 'result': 'algorithm not faound'}
+            return result
+
+        result = {'error':0, 'result': fingerprint.hexdigest().lower()}
+        return result
+
+    except BaseException as error:
+        result = {'error':2, 'result': error}
+        return result

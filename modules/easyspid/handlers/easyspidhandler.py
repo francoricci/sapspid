@@ -6,12 +6,15 @@ import traceback
 import tornado.gen
 import tornado.ioloop
 import tornado.concurrent
+import tornado.httpclient
+import urllib
 import logging
 from lib.customException import ApplicationException
 import globalsObj
 import re
 import easyspid.lib.easyspid
 import easyspid.lib.database
+import easyspid.lib.utils
 from easyspid.lib.utils import Saml2_Settings
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
@@ -19,8 +22,10 @@ from onelogin.saml2.authn_request import OneLogin_Saml2_Authn_Request
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.response import OneLogin_Saml2_Response
+from onelogin.saml2.utils import OneLogin_Saml2_XML
 import xml.etree.ElementTree
 from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
+from lxml import etree
 
 class easyspidHandler(RequestHandler):
 
@@ -28,6 +33,7 @@ class easyspidHandler(RequestHandler):
         super(RequestHandler, self).__init__(*args, **kwds)
         self.dbobjSaml = globalsObj.DbConnections['samlDb']
         self.dbobjJwt = globalsObj.DbConnections['jwtDb']
+        self.routing = None
 
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -142,8 +148,11 @@ class easyspidHandler(RequestHandler):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
 
-        # metadata verify
+        # sp metadata verify
         metadataVerify = re.compile("^/api/prvd/([^/]+)/metadata/verify$")
+
+        # validate assertion sign
+        validateAssertion = re.compile("^/api/assertion/validate$")
 
         # verify authn request
         authnverify = re.compile("^/api/prvd/([^/]+)/authnreq/verify")
@@ -156,6 +165,10 @@ class easyspidHandler(RequestHandler):
             fut = self.executor.submit(self.verifySpMetadata, sp)
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
+        elif validateAssertion.search(self.request.path):
+            fut = self.executor.submit(self.validateAssertion)
+            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+
         elif authnverify.search(self.request.path):
             sp = authnverify.search(self.request.path).group(1)
             fut = self.executor.submit(self.verifyAuthnRequest, sp)
@@ -166,9 +179,13 @@ class easyspidHandler(RequestHandler):
             fut = self.executor.submit(self.processResponse, sp)
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
-        # self.set_status(response_obj.error.httpcode)
-        # self.write(response_obj.jsonWrite())
-        # self.finish()
+            if response_obj.error.httpcode == 200:
+                self.writeLog(response_obj)
+                self.set_header('Content-Type', 'text/html; charset=UTF-8')
+                self.set_status(response_obj.error.httpcode)
+                self.write(response_obj.result.postTo)
+                self.finish()
+                return
 
         self.writeLog(response_obj)
         self.writeResponse(response_obj)
@@ -180,6 +197,12 @@ class easyspidHandler(RequestHandler):
 
     def writeResponse(self, response_obj):
 
+        # if self.routing is None:
+        #     self.set_status(response_obj.error.httpcode)
+        #     self.write(response_obj.jsonWrite())
+        #     self.finish()
+        # else:
+        #     self.client = tornado.httpclient.AsyncHTTPClient()
         self.set_status(response_obj.error.httpcode)
         self.write(response_obj.jsonWrite())
         self.finish()
@@ -210,7 +233,6 @@ class easyspidHandler(RequestHandler):
 
         return
 
-    #@tornado.concurrent.run_on_executor
     def buildMetadata(self, sp, dbSave = True):
         x_real_ip = self.request.headers.get("X-Real-IP")
         remote_ip = x_real_ip or self.request.remote_ip
@@ -404,13 +426,15 @@ class easyspidHandler(RequestHandler):
 
             if sp_settings['error'] == 0 and sp_settings['result'] != None:
                 # genera risposta tutto ok
+
                 spSettings = Saml2_Settings(sp_settings['result'])
+
                 chk = spSettings.validate_metadata(metadata,
                         fingerprint = sp_settings['result']['sp']['x509cert_fingerprint'],
                         fingerprintalg = sp_settings['result']['sp']['x509cert_fingerprintalg'],
                         validatecert=False)
 
-                if len(chk['validate']) > 0:
+                if not chk['schemaValidate']:
                     response_obj = ResponseObj(httpcode=401)
                     response_obj.setError('easyspid104')
                     response_obj.setResult(metadataValidate = chk)
@@ -420,7 +444,7 @@ class easyspidHandler(RequestHandler):
                     response_obj.setError('easyspid106')
                     response_obj.setResult(metadataValidate = chk)
 
-                elif len(chk['validate']) == 0 and chk['signCheck']:
+                elif chk['schemaValidate'] and chk['signCheck']:
                     response_obj = ResponseObj(httpcode=200)
                     response_obj.setError('200')
                     response_obj.setResult(metadataValidate = chk)
@@ -456,7 +480,86 @@ class easyspidHandler(RequestHandler):
         response_obj.setID(temp.id)
         return response_obj
 
-    def buildAthnReq(self, sp, idp, attributeIndex, binding, signed = True):
+    def validateAssertion(self):
+
+        try:
+
+            temp = RequestObjNew(self.request.body)
+            if temp.error["code"] == 2:
+                response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
+                response_obj.setError('400')
+                logging.getLogger(__name__).error('Validation error. Json input error')
+                return response_obj
+
+            elif temp.error["code"] > 0:
+                raise tornado.web.HTTPError(httpcode=503, log_message=temp.error["message"])
+
+            prvd = temp.request['provider']
+            assertion = temp.request['assertion']
+
+            if prvd != "":
+                prvdSignature  = self.dbobjSaml.makeQuery("EXECUTE get_signature(%s)",
+                            [prvd],type = self.dbobjSaml.stmts['get_signature']['pool'])
+
+                if prvdSignature['error'] == 0 and prvdSignature['result'] != None:
+                    certFingerprint = prvdSignature['result']['fingerprint']
+                    certFingerprintalg = prvdSignature['result']['fingerprintalg']
+
+                elif prvdSignature['error'] == 0 and prvdSignature['result'] == None:
+                    response_obj = ResponseObj(httpcode=404)
+                    response_obj.setError('easyspid112')
+                    return response_obj
+
+                elif prvdSignature['error'] > 0:
+                    response_obj = ResponseObj(httpcode=500, debugMessage=prvdSignature['result'])
+                    response_obj.setError("easyspid105")
+                    return response_obj
+
+            elif prvd == "":
+                certFingerprint = None
+                certFingerprintalg = None
+
+            chk = easyspid.lib.utils.validateAssertion(assertion, fingerprint=certFingerprint, fingerprintalg=certFingerprintalg)
+
+            if not chk['schemaValidate']:
+                response_obj = ResponseObj(httpcode=401)
+                response_obj.setError('easyspid104')
+                response_obj.setResult(assertionChk = chk)
+
+            elif not chk['signCheck']:
+                response_obj = ResponseObj(httpcode=401)
+                response_obj.setError('easyspid106')
+                response_obj.setResult(assertionChk = chk)
+
+            elif chk['schemaValidate'] and chk['signCheck']:
+                response_obj = ResponseObj(httpcode=200)
+                response_obj.setError('200')
+                response_obj.setResult(assertionChk = chk)
+
+        except tornado.web.MissingArgumentError as error:
+            response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
+                                       devMessage=error.log_message)
+            response_obj.setError(str(error.status_code))
+            logging.getLogger(__name__).error('%s'% error,exc_info=True)
+
+        except ApplicationException as inst:
+            response_obj = ResponseObj(httpcode=500,  debugMessage=inst)
+            response_obj.setError(inst.code)
+            #responsejson = response_obj.jsonWrite()
+            logging.getLogger(__name__).error('Exception',exc_info=True)
+
+        except Exception as inst:
+            response_obj = ResponseObj(httpcode=500, debugMessage=inst)
+            response_obj.setError('500')
+            logging.getLogger(__name__).error('Exception',exc_info=True)
+
+        finally:
+            logging.getLogger(__name__).warning('easyspid/validateAssertion handler executed')
+
+        response_obj.setID(temp.id)
+        return response_obj
+
+    def buildAthnReq(self, sp, idp, attributeIndex, signed = True):
         x_real_ip = self.request.headers.get("X-Real-IP")
         remote_ip = x_real_ip or self.request.remote_ip
 
@@ -589,9 +692,14 @@ class easyspidHandler(RequestHandler):
 
             if prvd_settings['error'] == 0 and prvd_settings['result'] != None:
                 prvdSettings = Saml2_Settings(prvd_settings['result'])
-                chk = prvdSettings.validate_authnreq_sign(authn_request_signed, validatecert=False)
 
-                if len(chk['validate']) > 0:
+                #chk = prvdSettings.validate_authnreq_sign(authn_request_signed, validatecert=False)
+                chk = easyspid.lib.utils.validateAssertion(authn_request_signed,
+                                prvd_settings['result']['sp']['x509cert_fingerprint'],
+                                prvd_settings['result']['sp']['x509cert_fingerprintalg'])
+
+                #if len(chk['schemaValidate']) > 0:
+                if not chk['schemaValidate']:
                     response_obj = ResponseObj(httpcode=401)
                     response_obj.setError('easyspid104')
                     response_obj.setResult(authnValidate = chk)
@@ -601,7 +709,8 @@ class easyspidHandler(RequestHandler):
                     response_obj.setError('easyspid106')
                     response_obj.setResult(authnValidate = chk)
 
-                elif len(chk['validate']) == 0 and chk['signCheck']:
+                #elif len(chk['schemaValidate']) == 0 and chk['signCheck']:
+                elif chk['schemaValidate'] and chk['signCheck']:
                     response_obj = ResponseObj(httpcode=200)
                     response_obj.setError('200')
                     response_obj.setResult(authnValid = chk)
@@ -640,7 +749,7 @@ class easyspidHandler(RequestHandler):
     def loginAuthnReq(self, sp, idp, attributeIndex, binding, srelay_cod):
         try:
             # buil authn request
-            authn_request = self.buildAthnReq(sp, idp, attributeIndex, binding, signed=False)
+            authn_request = self.buildAthnReq(sp, idp, attributeIndex, signed=False)
 
             bindingMap = {'redirect':OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
                           'post': OneLogin_Saml2_Constants.BINDING_HTTP_POST}
@@ -655,8 +764,18 @@ class easyspidHandler(RequestHandler):
 
             # get relay state
             #srelay = connSaml.get_services(srelay_cod, active=True)
-            srelay  = self.dbobjSaml.makeQuery("EXECUTE get_services(%s)",
-                        [True],type = self.dbobjSaml.stmts['get_services']['pool'])
+            srelay  = self.dbobjSaml.makeQuery("EXECUTE get_service(%s, %s)",
+                        [True, srelay_cod],type = self.dbobjSaml.stmts['get_service']['pool'])
+
+            if srelay['error'] == 0 and srelay['result'] == None:
+                response_obj = ResponseObj(httpcode=404)
+                response_obj.setError('easyspid113')
+                return response_obj
+
+            elif srelay['error'] > 0:
+                response_obj = ResponseObj(httpcode=500, debugMessage=sp_settings['result'])
+                response_obj.setError("easyspid105")
+                return response_obj
 
             if (sp_settings['error'] == 0 and sp_settings['result'] != None
                 and idp_metadata.error.code == '200' and authn_request.error.code == '200'):
@@ -702,14 +821,17 @@ class easyspidHandler(RequestHandler):
 
                 # POST binding
                 elif binding == 'post':
-                    authn_request_signed = self.buildAthnReq(sp, idp, attributeIndex, binding, signed=True)
+                    authn_request_signed = self.buildAthnReq(sp, idp, attributeIndex, signed=True)
                     saml_request_signed = OneLogin_Saml2_Utils.b64encode(authn_request_signed.result.authnrequest)
                     relay_state = OneLogin_Saml2_Utils.b64encode(srelay['result']['cod_service'])
                     idpsso = idp_settings['singleSignOnService']['url']
 
-                    post_form = ""
-                    with open(globalsObj.rootFolder+globalsObj.easyspid_postFormPath, 'r') as myfile:
-                        post_form = myfile.read().replace('\n', '')
+                    try:
+                        with open(globalsObj.rootFolder+globalsObj.easyspid_postFormPath, 'r') as myfile:
+                            post_form = myfile.read().replace('\n', '')
+                    except:
+                        with open(globalsObj.easyspid_postFormPath, 'r') as myfile:
+                            post_form = myfile.read().replace('\n', '')
 
                     post_form = post_form.replace("%IDPSSO%",idpsso)
                     post_form = post_form.replace("%AUTHNREQUEST%",saml_request_signed)
@@ -761,25 +883,46 @@ class easyspidHandler(RequestHandler):
             responsePost = self.get_argument('SAMLResponse')
             srelayPost = self.get_argument('RelayState')
 
-            #decode Relay state
-            try:
-                srelay = OneLogin_Saml2_Utils.decode_base64_and_inflate(srelayPost)
-            except Exception:
-                pass
-            try:
-                srelay = OneLogin_Saml2_Utils.b64decode(srelayPost)
-            except Exception:
-                pass
-
             # decode saml response to get idp code by entityId attribute
+            response = responsePost
             try:
                  response = OneLogin_Saml2_Utils.decode_base64_and_inflate(responsePost)
             except Exception:
-                 pass
+                 response = OneLogin_Saml2_Utils.b64decode(responsePost)
             try:
                  response = OneLogin_Saml2_Utils.b64decode(responsePost)
             except Exception:
                  pass
+
+            #decode Relay state
+            srelay = srelayPost
+            try:
+                 srelay = OneLogin_Saml2_Utils.decode_base64_and_inflate(srelayPost)
+            except Exception:
+                 pass
+            try:
+                 srelay = OneLogin_Saml2_Utils.b64decode(srelayPost)
+            except Exception:
+                 pass
+
+            try:
+                service = self.dbobjSaml.makeQuery("EXECUTE get_service(%s, %s)",
+                        [True, srelay],type = self.dbobjSaml.stmts['get_service']['pool'])
+
+                if service['error'] == 0 and service['result'] != None:
+                    # costruisci il routing
+                    self.routing = dict()
+                    self.routing['url'] = service['result']['url']
+                    self.routing['relaystate'] = srelay
+
+                elif service['error'] > 0:
+                    response_obj = ResponseObj(httpcode=500, debugMessage=service['result'])
+                    response_obj.setError("easyspid111")
+                    return response_obj
+
+            except Exception:
+                pass
+
 
             ns = {'md0': OneLogin_Saml2_Constants.NS_SAMLP, 'md1': OneLogin_Saml2_Constants.NS_SAML}
             parsedResponse = xml.etree.ElementTree.fromstring(response)
@@ -829,9 +972,13 @@ class easyspidHandler(RequestHandler):
 
                 #validate response sign
                 prvdSettings = Saml2_Settings(sp_settings['result'])
-                chk = prvdSettings.validate_response_sign(response, validatecert=False, debug=True)
+                #chk = prvdSettings.validate_response_sign(response, validatecert=False, debug=True)
+                chk = easyspid.lib.utils.validateAssertion(response,
+                                sp_settings['result']['idp']['x509cert_fingerprint'],
+                                sp_settings['result']['idp']['x509cert_fingerprintalg'])
 
-                if len(chk['validate']) > 0:
+                #if len(chk['schemaValidate']) > 0:
+                if not chk['schemaValidate']:
                     response_obj = ResponseObj(httpcode=401)
                     response_obj.setError('easyspid104')
                     response_obj.setResult(responseValidate = chk)
@@ -843,7 +990,8 @@ class easyspidHandler(RequestHandler):
                     response_obj.setResult(responseValidate = chk)
                     return response_obj
 
-                elif len(chk['validate']) == 0 and chk['signCheck']:
+                #elif len(chk['schemaValidate']) == 0 and chk['signCheck']:
+                elif chk['schemaValidate'] and chk['signCheck']:
                     response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result']['ID_assertion'])
                     response_obj.setError('200')
                     #response_obj.setResult(responseValidate = chk)
@@ -886,14 +1034,23 @@ class easyspidHandler(RequestHandler):
 
                 #get all attributes
                 attributes = OneLoginResponse.get_attributes()
-                #idAssertion = OneLoginResponse.document.get('ID', None)
-                #assertionData = connSaml.chk_idAssertion(idAssertion)
-                #assertionData = self.dbobjSaml.makeQuery("EXECUTE chk_idAssertion(%s)",
-                #        [idAssertion],type = self.dbobjSaml.stmts['chk_idAssertion']['pool'], close = True)
+
+                try:
+                    with open(globalsObj.rootFolder+globalsObj.easyspid_responseFormPath, 'r') as myfile:
+                        response_form = myfile.read()
+                except:
+                    with open(globalsObj.easyspid_responseFormPath, 'r') as myfile:
+                        response_form = myfile.read()
+
+                response_form = response_form.replace("%URLTARGET%",self.routing['url'])
+                response_form = response_form.replace("%SAMLRESPONSE%",responsePost)
+                response_form = response_form.replace("%JSONRESPONSE%",OneLogin_Saml2_Utils.b64encode(response))
+                response_form = response_form.replace("%RELAYSTATE%",srelayPost)
+
                 response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result']['ID_assertion'])
                 response_obj.setError('200')
                 response_obj.setResult(attributes = attributes, jwt = jwt['result']['token'], responseValidate = chk,
-                                       response = str(response, 'utf-8'), responseBase64 = responsePost)
+                        response = str(response, 'utf-8'), responseBase64 = responsePost, postTo = response_form)
 
             elif sp_settings['error'] == 0 and sp_settings['result'] == None:
                 response_obj = ResponseObj(httpcode=404)
