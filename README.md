@@ -10,6 +10,7 @@ sapspid è un middleware che si interpone tra il service provider (SP) e l’ide
 
 Tutte le API di sapspid sono di tipo RestFull ed essendo basate su messaggi JSON, rendono più semplice l’implementazione da parte del SP. Il valore aggiunto di sapspid è racchiuso nella possibilità di configurare ogni parametro della transazione fra utente <–> SP <–> IdP. Si possono aggiungere IdP in modo trasparente, configurare le URL di callback chiamate dagli IdP per inoltrare la SAML response e configurare tutti gli elementi della SAML request che sono al centro della transazione SPID. Tutte le configurazioni sono archiviate in un DB PostgreSQL
 Una volta configurato, sapspid è in grado di pubblicare i metadati SAML del SP.
+
 ## SICUREZZA
 Poiché sapspid è un middleware, può generare problemi di sicurezza dovuti al fatto che, nel normale processo di trusting che avviene fra SP e IdP, si inserisce un nuovo attore. sapspid è un intermediario che per conto del SP si occupa della generazione della SAML request e del successivo inoltro della SAML response al SP. In particolare:
 
@@ -73,6 +74,10 @@ Le impostazioni del service provider si trovano nelle tabelle:
 Le impostazioni degli Idp si trovano nelle tabelle:
 * [providers](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
 * [metadata](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/metadata.html). Copiare nella colonnna xml il metadata dell'Identity Provider
+
+# Json Web Token JWT
+Per la verifica dei messaggio inviatai da SapSPID sono diposnibili token [jwt](https://jwt.io/).
+Ogni messaggio inviato da sapspid, riporta un token di tipo jwt. Utilizzanbdo le apposite API, è possibile verificare un genrico token.
 
 # Swagger
 Il file swagger.json è accessibile da:
