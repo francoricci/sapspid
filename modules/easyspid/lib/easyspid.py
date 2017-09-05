@@ -10,6 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from lxml import etree
 from hashlib import sha1, sha256, sha384, sha512
 import base64
+from onelogin.saml2.constants import OneLogin_Saml2_Constants
 
 ESPID_ERRORS_FILE_PATH = "modules/easyspid/conf/errors.ini"
 ESPID_CONFIG_FILE_PATH = "modules/easyspid/conf/easyspid.ini"
@@ -91,7 +92,7 @@ globalsObj.easyspidSettings['idp'] = {
   }
 
 
-def spSettings(cod_sp, cod_idp = None, close = True):
+def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT, close = True):
     result = {'error':0, 'result': None}
 
     # acquisisci una connessione dal pool
@@ -124,7 +125,7 @@ def spSettings(cod_sp, cod_idp = None, close = True):
             if idp_metadata['error'] == 0 and idp_metadata['result'] != None:
 
                 metadata = idp_metadata['result']['xml']
-                idp_data = OneLogin_Saml2_IdPMetadataParser.parse(metadata)
+                idp_data = OneLogin_Saml2_IdPMetadataParser.parse(metadata, required_sso_binding= binding, required_slo_binding=binding)
                 idp_settings = idp_data['idp']
 
                 if 'entityId' in idp_settings:

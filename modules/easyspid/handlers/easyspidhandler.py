@@ -1,3 +1,4 @@
+import os
 from response import ResponseObj
 from response import RequestHandler
 from request import RequestObjNew
@@ -7,7 +8,6 @@ import tornado.gen
 import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
-import urllib
 import logging
 from lib.customException import ApplicationException
 import globalsObj
@@ -22,10 +22,8 @@ from onelogin.saml2.authn_request import OneLogin_Saml2_Authn_Request
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.response import OneLogin_Saml2_Response
-from onelogin.saml2.utils import OneLogin_Saml2_XML
 import xml.etree.ElementTree
 from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
-from lxml import etree
 
 class easyspidHandler(RequestHandler):
 
@@ -104,7 +102,7 @@ class easyspidHandler(RequestHandler):
             idp = super(self.__class__, self).get_argument('idp')
             attributeIndex = super(self.__class__, self).get_argument('attrindex')
             binding = super(self.__class__, self).get_argument('binding')
-            fut = self.executor.submit(self.buildAthnReq, sp, idp,attributeIndex, binding)
+            fut = self.executor.submit(self.buildAthnReq, sp, idp, attributeIndex, binding)
             response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif loginauth.search(self.request.path):
@@ -559,7 +557,7 @@ class easyspidHandler(RequestHandler):
         response_obj.setID(temp.id)
         return response_obj
 
-    def buildAthnReq(self, sp, idp, attributeIndex, signed = True):
+    def buildAthnReq(self, sp, idp, attributeIndex, binding='redirect', signed = True):
         x_real_ip = self.request.headers.get("X-Real-IP")
         remote_ip = x_real_ip or self.request.remote_ip
 
@@ -570,7 +568,7 @@ class easyspidHandler(RequestHandler):
             #connSaml = easyspid.lib.database.Database(globalsObj.DbConnections['samlDbPollMaster']['pool'])
             #connJwt = jwtoken.lib.database.Database(globalsObj.DbConnections['jwtDbPollSlave']['pool'])
             #sp_settings = easyspid.lib.easyspid.spSettings(sp, idp, conn=self.connSaml, close=False)
-            sp_settings = easyspid.lib.easyspid.spSettings(sp, idp, close = True)
+            sp_settings = easyspid.lib.easyspid.spSettings(sp, idp, binding=bindingMap[binding], close = True)
 
             if sp_settings['error'] == 0 and sp_settings['result'] != None:
 
@@ -749,7 +747,10 @@ class easyspidHandler(RequestHandler):
     def loginAuthnReq(self, sp, idp, attributeIndex, binding, srelay_cod):
         try:
             # buil authn request
-            authn_request = self.buildAthnReq(sp, idp, attributeIndex, signed=False)
+            if binding == 'redirect':
+                authn_request = self.buildAthnReq(sp, idp, attributeIndex, binding= binding, signed=False)
+            elif binding == 'post':
+                authn_request = self.buildAthnReq(sp, idp, attributeIndex, binding= binding, signed=True)
 
             bindingMap = {'redirect':OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
                           'post': OneLogin_Saml2_Constants.BINDING_HTTP_POST}
@@ -764,8 +765,8 @@ class easyspidHandler(RequestHandler):
 
             # get relay state
             #srelay = connSaml.get_services(srelay_cod, active=True)
-            srelay  = self.dbobjSaml.makeQuery("EXECUTE get_service(%s, %s)",
-                        [True, srelay_cod],type = self.dbobjSaml.stmts['get_service']['pool'])
+            srelay  = self.dbobjSaml.makeQuery("EXECUTE get_service(%s, %s, %s)",
+                        [True, srelay_cod, sp],type = self.dbobjSaml.stmts['get_service']['pool'])
 
             if srelay['error'] == 0 and srelay['result'] == None:
                 response_obj = ResponseObj(httpcode=404)
@@ -811,7 +812,7 @@ class easyspidHandler(RequestHandler):
                 if binding == 'redirect':
                     saml_request = OneLogin_Saml2_Utils.deflate_and_base64_encode(authn_request.result.authnrequest)
                     parameters = {'SAMLRequest': saml_request}
-                    parameters['RelayState'] = srelay['result']['cod_service']
+                    parameters['RelayState'] = srelay['result']['relay_state']
                     auth.add_request_signature(parameters, sign_alg)
                     redirectLocation = auth.redirect_to(auth.get_sso_url(), parameters)
 
@@ -821,13 +822,13 @@ class easyspidHandler(RequestHandler):
 
                 # POST binding
                 elif binding == 'post':
-                    authn_request_signed = self.buildAthnReq(sp, idp, attributeIndex, signed=True)
-                    saml_request_signed = OneLogin_Saml2_Utils.b64encode(authn_request_signed.result.authnrequest)
-                    relay_state = OneLogin_Saml2_Utils.b64encode(srelay['result']['cod_service'])
+                    #authn_request_signed = self.buildAthnReq(sp, idp, attributeIndex, signed=True)
+                    saml_request_signed = OneLogin_Saml2_Utils.b64encode(authn_request.result.authnrequest)
+                    relay_state = OneLogin_Saml2_Utils.b64encode(srelay['result']['relay_state'])
                     idpsso = idp_settings['singleSignOnService']['url']
 
                     try:
-                        with open(globalsObj.rootFolder+globalsObj.easyspid_postFormPath, 'r') as myfile:
+                        with open(os.path.join(globalsObj.rootFolder, globalsObj.easyspid_postFormPath), 'r') as myfile:
                             post_form = myfile.read().replace('\n', '')
                     except:
                         with open(globalsObj.easyspid_postFormPath, 'r') as myfile:
@@ -906,8 +907,8 @@ class easyspidHandler(RequestHandler):
                  pass
 
             try:
-                service = self.dbobjSaml.makeQuery("EXECUTE get_service(%s, %s)",
-                        [True, srelay],type = self.dbobjSaml.stmts['get_service']['pool'])
+                service = self.dbobjSaml.makeQuery("EXECUTE get_service(%s, %s, %s)",
+                        [True, srelay, sp],type = self.dbobjSaml.stmts['get_service']['pool'])
 
                 if service['error'] == 0 and service['result'] != None:
                     # costruisci il routing
@@ -922,7 +923,6 @@ class easyspidHandler(RequestHandler):
 
             except Exception:
                 pass
-
 
             ns = {'md0': OneLogin_Saml2_Constants.NS_SAMLP, 'md1': OneLogin_Saml2_Constants.NS_SAML}
             parsedResponse = xml.etree.ElementTree.fromstring(response)
@@ -1036,7 +1036,7 @@ class easyspidHandler(RequestHandler):
                 attributes = OneLoginResponse.get_attributes()
 
                 try:
-                    with open(globalsObj.rootFolder+globalsObj.easyspid_responseFormPath, 'r') as myfile:
+                    with open(os.path.join(globalsObj.rootFolder, globalsObj.easyspid_responseFormPath), 'r') as myfile:
                         response_form = myfile.read()
                 except:
                     with open(globalsObj.easyspid_responseFormPath, 'r') as myfile:

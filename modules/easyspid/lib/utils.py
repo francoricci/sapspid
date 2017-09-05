@@ -8,7 +8,7 @@ import easyspid.lib.easyspid
 import xml.etree.ElementTree
 from lxml import etree
 from onelogin.saml2 import compat
-#import logging
+import re
 
 
 class Saml2_Settings(OneLogin_Saml2_Settings):
@@ -413,6 +413,7 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
         result['msg'] = 'Empty string supplied as input'
         return  result
 
+    xml = xmlRemoveDeclaration(xml)
     parsedassertion = etree.fromstring(xml)
 
     # assertion name path
@@ -483,5 +484,13 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
         result['certAllowed'] = False
 
     return result
+
+
+def xmlRemoveDeclaration(xml):
+
+    if len(xml) == 0:
+        return xml
+
+    return re.sub("<\?xml[^>]+>", "", xml)
 
 

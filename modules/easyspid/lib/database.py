@@ -42,8 +42,9 @@ class Database(object):
         # self.stmts['get_services'] = {'sql':"PREPARE get_services (bool) AS " \
         #                 "SELECT t1.* FROM saml.services as t1 where t1.active = $1 ORDER BY name ASC", 'pool':'slave'}
 
-        self.stmts['get_service'] = {'sql':"PREPARE get_service (bool, text) AS " \
-                        "SELECT t1.* FROM saml.services as t1 where t1.active = $1 and t1.cod_service = $2", 'pool':'slave'}
+        self.stmts['get_service'] = {'sql':"PREPARE get_service (bool, text, text) AS " \
+                        "SELECT t1.* FROM saml.services as t1 where t1.active = $1 and t1.relay_state = $2 "
+                        "and t1.cod_provider = $3", 'pool':'slave'}
 
         self.stmts['get_idAssertion'] = {'sql':"PREPARE get_idAssertion (text) AS " \
                         "SELECT t1.* FROM saml.view_assertions as t1 where t1.\"ID_assertion\" = $1", 'pool':'slave'}
