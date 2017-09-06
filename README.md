@@ -60,20 +60,20 @@ Per FreeBSD è disponibile lo script sh che deve essere copitato in /usr/local/e
 ## DB
 Per creare il database di sapspid è necessaria la versione 9.6 di PostgreSQL e l'estensione `PL/Python` e l'estensione `uuid-ossp`.
 * Utilizzare lo script `sql/sapspid.sql` per creare e popolare il DB
-L'intero schema del DB è consultabile in [DBschema](http://spid.uniroma1.it/api/doc/SchemaDb/index.html).
+L'intero schema del DB è consultabile in [DBschema](https://spid.uniroma1.it/api/doc/SchemaDb/index.html).
 
 # CONFIGURAZIONE
 La configurazione di sapspid avviene modificando opportune tabelle del DB ed opportuni file dell'applicativo.
 ## SP settings
 Le impostazioni del service provider si trovano nelle tabelle:
-* [providers](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
-* [settings](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/settings.html). Modifcarte i json delle colonne settings ed advanced_settings riposratndo i dati del service provider
-* [signatures](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/signatures.html). Inserire le chaivi pubbliche degli Idp e quelle pubbliche e private degli SP. Il sistema calcola utomaticamente le fingerprint in base fingerprintalg scelto.
-* [services](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/services.html). Inserire i relaystate per il service provider.
+* [providers](https://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
+* [settings](https://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/settings.html). Modifcarte i json delle colonne settings ed advanced_settings riposratndo i dati del service provider
+* [signatures](https://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/signatures.html). Inserire le chaivi pubbliche degli Idp e quelle pubbliche e private degli SP. Il sistema calcola utomaticamente le fingerprint in base fingerprintalg scelto.
+* [services](https://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/services.html). Inserire i relaystate per il service provider.
 ## IdP settings
 Le impostazioni degli Idp si trovano nelle tabelle:
-* [providers](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
-* [metadata](http://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/metadata.html). Copiare nella colonnna xml il metadata dell'Identity Provider
+* [providers](https://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/providers.html)
+* [metadata](https://spid.uniroma1.it/api/doc/SchemaDb/saml/tables/metadata.html). Copiare nella colonnna xml il metadata dell'Identity Provider
 
 # Json Web Token JWT
 Per la verifica dei messaggio inviatai da SapSPID sono diposnibili token [jwt](https://jwt.io/).
@@ -81,9 +81,9 @@ Ogni messaggio inviato da sapspid, riporta un token di tipo jwt. Utilizzanbdo le
 
 # Swagger
 Il file swagger.json è accessibile da:
-[swagger.json](http://spid.uniroma1.it/api/doc/swagger.json)
-All'indirizzo http://spid.uniroma1.it/swagger-ui/index.html è disponibile l'iterfaccia di swagger
+[swagger.json](https://spid.uniroma1.it/api/doc/swagger.json)
+All'indirizzo https://spid.uniroma1.it/swagger-ui/index.html è disponibile l'iterfaccia di swagger
 
 # Pulsanti di Accesso SPID
 Un esempio di funzioanmento di Sapienza SPID è disponibile al link:
-[SPID access](http://spid.uniroma1.it/access/index.html)
+[SPID access](https://spid.uniroma1.it/access/index.html)
