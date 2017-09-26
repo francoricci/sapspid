@@ -16,10 +16,14 @@ ESPID_ERRORS_FILE_PATH = "modules/easyspid/conf/errors.ini"
 ESPID_CONFIG_FILE_PATH = "modules/easyspid/conf/easyspid.ini"
 
 # carica le configurazioni globali e locali del modulo
-try:
-    easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH, globalsObj.configuration.get('easyspid','conf'))
-except BaseException as error:
-    easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH)
+easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH)
+if globalsObj.configuration.has_option('easyspid','conf'):
+    easyspid_file_configuration = commonlib.configure(globalsObj.configuration.get('easyspid','conf'),easyspid_file_configuration)
+
+# try:
+#     easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH, globalsObj.configuration.get('easyspid','conf'))
+# except BaseException as error:
+#     easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH)
 
 # carica i messaggi di errore del modulo
 easyspid_error_configuration = commonlib.configure(ESPID_ERRORS_FILE_PATH)

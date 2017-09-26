@@ -6,10 +6,14 @@ JWT_ERRORS_FILE_PATH = "modules/jwtoken/conf/errors.ini"
 JWT_CONFIG_FILE_PATH = "modules/jwtoken/conf/jwtoken.ini"
 
 # carica le configurazioni globali e locali del modulo
-try:
-    jwtoken_file_configuration = commonlib.configure(JWT_CONFIG_FILE_PATH, globalsObj.configuration.get('jwtoken','conf'))
-except BaseException as error:
-    jwtoken_file_configuration = commonlib.configure(JWT_CONFIG_FILE_PATH)
+jwtoken_file_configuration = commonlib.configure(JWT_CONFIG_FILE_PATH)
+if globalsObj.configuration.has_option('jwtoken','conf'):
+    jwtoken_file_configuration = commonlib.configure(globalsObj.configuration.get('jwtoken','conf'),jwtoken_file_configuration)
+
+# try:
+#     jwtoken_file_configuration = commonlib.configure(JWT_CONFIG_FILE_PATH, globalsObj.configuration.get('jwtoken','conf'))
+# except BaseException as error:
+#     jwtoken_file_configuration = commonlib.configure(JWT_CONFIG_FILE_PATH)
 
 # carica i messaggi di errore del modulo
 jwtoken_error_configuration = commonlib.configure(JWT_ERRORS_FILE_PATH)

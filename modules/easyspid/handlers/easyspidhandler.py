@@ -24,6 +24,7 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.response import OneLogin_Saml2_Response
 import xml.etree.ElementTree
 from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
+import asyncio
 
 class easyspidHandler(RequestHandler):
 
@@ -85,25 +86,25 @@ class easyspidHandler(RequestHandler):
 
         if spbuild.search(self.request.path):
             sp = spbuild.search(self.request.path).group(1)
-            fut = self.executor.submit(self.buildMetadata, sp)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.buildMetadata, sp)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif spget.search(self.request.path):
             sp = spget.search(self.request.path).group(1)
-            fut = self.executor.submit(self.getMetadata, sp)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.getMetadata, sp)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif prvd.search(self.request.path):
-            fut = self.executor.submit(self.getProviders)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.getProviders)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif athn.search(self.request.path):
             sp = athn.search(self.request.path).group(1)
             idp = super(self.__class__, self).get_argument('idp')
             attributeIndex = super(self.__class__, self).get_argument('attrindex')
             binding = super(self.__class__, self).get_argument('binding')
-            fut = self.executor.submit(self.buildAthnReq, sp, idp, attributeIndex, binding)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.buildAthnReq, sp, idp, attributeIndex, binding)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif loginauth.search(self.request.path):
             sp = loginauth.search(self.request.path).group(1)
@@ -111,8 +112,8 @@ class easyspidHandler(RequestHandler):
             attributeIndex = super(self.__class__, self).get_argument('attrindex')
             binding = super(self.__class__, self).get_argument('binding')
             srelay = super(self.__class__, self).get_argument('srelay')
-            fut = self.executor.submit(self.loginAuthnReq, sp, idp,attributeIndex, binding, srelay)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.loginAuthnReq, sp, idp,attributeIndex, binding, srelay)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
             if response_obj.error.httpcode == 200 and binding == 'redirect':
                 self.writeLog(response_obj)
@@ -160,22 +161,22 @@ class easyspidHandler(RequestHandler):
 
         if metadataVerify.search(self.request.path):
             sp = metadataVerify.search(self.request.path).group(1)
-            fut = self.executor.submit(self.verifySpMetadata, sp)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verifySpMetadata, sp)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif validateAssertion.search(self.request.path):
-            fut = self.executor.submit(self.validateAssertion)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.validateAssertion)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif authnverify.search(self.request.path):
             sp = authnverify.search(self.request.path).group(1)
-            fut = self.executor.submit(self.verifyAuthnRequest, sp)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verifyAuthnRequest, sp)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif response.search(self.request.path):
             sp = response.search(self.request.path).group(1)
-            fut = self.executor.submit(self.processResponse, sp)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.processResponse, sp)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
             if response_obj.error.httpcode == 200:
                 self.writeLog(response_obj)
@@ -748,9 +749,9 @@ class easyspidHandler(RequestHandler):
         try:
             # buil authn request
             if binding == 'redirect':
-                authn_request = self.buildAthnReq(sp, idp, attributeIndex, binding= binding, signed=False)
+                authn_request = self.buildAthnReq(sp, idp, attributeIndex, signed=False)
             elif binding == 'post':
-                authn_request = self.buildAthnReq(sp, idp, attributeIndex, binding= binding, signed=True)
+                authn_request = self.buildAthnReq(sp, idp, attributeIndex, signed=True)
 
             bindingMap = {'redirect':OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
                           'post': OneLogin_Saml2_Constants.BINDING_HTTP_POST}

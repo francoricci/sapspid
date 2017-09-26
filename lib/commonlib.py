@@ -6,31 +6,34 @@ import argparse
 import re
 
 """ read config file """
-def configure(default_file, local_file=None):
+def configure(default_file, configParser = None):
 
     Logger = logging.getLogger(__name__)
-    file_parser = configparser.ConfigParser(allow_no_value=True)
-    file_parser.add_section('conf')
+    if configParser is None:
+        file_parser = configparser.ConfigParser(allow_no_value=True)
+        #file_parser.add_section('conf')
+    else:
+        file_parser = configParser
 
-    # try load default config file
+    # try load config file
     try:
         file_parser.read_file(open(default_file))
-        file_parser.set('conf','default', default_file)
-        Logger.warning("Read default config file "+ file_parser.get('conf','default'))
+        #file_parser.set('conf','default', default_file)
+        Logger.warning("Read config file "+ default_file)
     except configparser.Error:
         Logger.error('Impossible read ' + default_file + '. Check path and permissions')
         run = 0
 
     # try to load the local config file
-    if(local_file != None):
-        try:
-            file_parser.read_file(open(local_file))
-            file_parser.set('conf','local', local_file)
-            Logger.warning("Read local config file "+ file_parser.get('conf','local'))
-        except configparser.Error:
-            Logger.warning('Impossible read ' + local_file + '. Check path and permissions')
-    else:
-        file_parser.set('conf','local', 'none')
+    # if(local_file != None):
+    #     try:
+    #         file_parser.read_file(open(local_file))
+    #         file_parser.set('conf','local', local_file)
+    #         Logger.warning("Read config files "+ file_parser.get('conf','local') + " and " + file_parser.get('conf','default'))
+    #     except configparser.Error:
+    #         Logger.warning('Impossible read ' + local_file + '. Check path and permissions')
+    # else:
+    #     file_parser.set('conf','local', 'none')
 
     return file_parser
 
@@ -161,7 +164,9 @@ def incrementalIniFile(newIni, oldIni = None, rawParser = True, separator = ',')
             outConfig.add_section(section)
 
         for option in options:
-            if outConfig.has_option(section, option) and (option == 'keys' or option =='handlers') \
+            #if outConfig.has_option(section, option) and (option == 'keys' or option =='handlers') \
+            #    and not re.search(newConfig.get(section, option), outConfig.get(section, option)):
+            if outConfig.has_option(section, option) and option == 'keys' \
                 and not re.search(newConfig.get(section, option), outConfig.get(section, option)):
 
                 newValue = outConfig.get(section, option) + separator + newConfig.get(section, option)

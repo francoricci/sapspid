@@ -9,10 +9,10 @@ import tornado.ioloop
 import tornado.concurrent
 import logging
 from lib.customException import ApplicationException
-import time
 import globalsObj
 import re
 import jwtoken.lib.jwtoken
+import asyncio
 
 class jwtokenHandler(RequestHandler):
 
@@ -53,37 +53,13 @@ class jwtokenHandler(RequestHandler):
 
         if re.match("/api/jwt/getByType", self.request.path):
             #task da eseguire per il get
-            fut = self.executor.submit(self.getByType)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.getByType)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif re.match("/api/jwt/verify", self.request.path):
              #task da eseguire per il get
-            fut = self.executor.submit(self.verify)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
-
-        #insert log
-        # if str(self.request.body, 'utf-8') == '':
-        #     jsonRequest = None
-        # else:
-        #     jsonRequest = str(self.request.body, 'utf-8')
-        #
-        # log_request = self.dbobjJwt.makeQuery("EXECUTE log_request(%s, %s, %s, %s)",
-        #                 [self.request.method,
-        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
-        #                  jsonRequest,
-        #                  self.request.remote_ip],
-        #                 type = self.dbobjJwt.stmts['log_request']['pool'], close = True, fetch=False)
-        #
-        # log_response = self.dbobjJwt.makeQuery("EXECUTE log_response(%s, %s, %s, %s)",
-        #                 [response_obj.error.httpcode,
-        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
-        #                  response_obj.jsonWrite(),
-        #                  self.request.remote_ip],
-        #                 type = self.dbobjJwt.stmts['log_response']['pool'], close = True, fetch=False)
-        #
-        # self.set_status(response_obj.error.httpcode)
-        # self.write(response_obj.jsonWrite())
-        # self.finish()
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verify)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         self.writeLog(response_obj)
         self.writeResponse(response_obj)
@@ -94,32 +70,8 @@ class jwtokenHandler(RequestHandler):
         self.set_default_headers()
 
         if re.match("/api/jwt/verify", self.request.path):
-            fut = self.executor.submit(self.verify)
-            response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
-
-        #insert log
-        # if str(self.request.body, 'utf-8') == '':
-        #     jsonRequest = None
-        # else:
-        #     jsonRequest = str(self.request.body, 'utf-8')
-        #
-        # log_request = self.dbobjJwt.makeQuery("EXECUTE log_request(%s, %s, %s, %s)",
-        #                 [self.request.method,
-        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
-        #                  jsonRequest,
-        #                  self.request.remote_ip],
-        #                 type = self.dbobjJwt.stmts['log_request']['pool'], close = True, fetch=False)
-        #
-        # log_response = self.dbobjJwt.makeQuery("EXECUTE log_response(%s, %s, %s, %s)",
-        #                 [response_obj.error.httpcode,
-        #                  self.request.protocol + "://" + self.request.host + self.request.uri,
-        #                  response_obj.jsonWrite(),
-        #                  self.request.remote_ip],
-        #                 type = self.dbobjJwt.stmts['log_response']['pool'], close = True, fetch=False)
-        #
-        # self.set_status(response_obj.error.httpcode)
-        # self.write(response_obj.jsonWrite())
-        # self.finish()
+            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verify)
+            #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         self.writeLog(response_obj)
         self.writeResponse(response_obj)

@@ -2,6 +2,7 @@ __author__ = 'franco'
 
 # Default config file
 CONFIG_FILE_PATH = "conf/server.ini"
+CONFIG_LOGGING_PATH = "conf/logging.ini"
 
 jsonReqSchema = {
       "type": "object",
@@ -26,9 +27,3 @@ jsonReqSchema = {
       },
       "additionalProperties": False
     }
-
-wspathLast = {'denied':
-                {'pattern': "r\"/.*\"",
-                 'handler': 'MainHandler.denied'
-                }
-            }
