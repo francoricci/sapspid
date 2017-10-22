@@ -9,7 +9,7 @@ class GetVersion(response.RequestHandler):
     async def get(self):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_status(200)
-        res = await asyncio.get_event_loop().run_in_executor(None, self.background_task)
+        res = await asyncio.get_event_loop().run_in_executor(self.executor, self.background_task)
         self.write(res)
         self.finish()
 

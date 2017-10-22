@@ -11,29 +11,16 @@ def configure(default_file, configParser = None):
     Logger = logging.getLogger(__name__)
     if configParser is None:
         file_parser = configparser.ConfigParser(allow_no_value=True)
-        #file_parser.add_section('conf')
     else:
         file_parser = configParser
 
-    # try load config file
+    # try load default config file
     try:
         file_parser.read_file(open(default_file))
-        #file_parser.set('conf','default', default_file)
         Logger.warning("Read config file "+ default_file)
     except configparser.Error:
         Logger.error('Impossible read ' + default_file + '. Check path and permissions')
         run = 0
-
-    # try to load the local config file
-    # if(local_file != None):
-    #     try:
-    #         file_parser.read_file(open(local_file))
-    #         file_parser.set('conf','local', local_file)
-    #         Logger.warning("Read config files "+ file_parser.get('conf','local') + " and " + file_parser.get('conf','default'))
-    #     except configparser.Error:
-    #         Logger.warning('Impossible read ' + local_file + '. Check path and permissions')
-    # else:
-    #     file_parser.set('conf','local', 'none')
 
     return file_parser
 
@@ -136,7 +123,7 @@ def loggingfileConfig2dictConfig(fileConfig, deafultDict = None, disable_existin
 Returns instance of ConfigParser or RawConfigParser
 newIni and oldIni can be file or ConfigParser instances
 '''
-def incrementalIniFile(newIni, oldIni = None, rawParser = True, separator = ','):
+def incrementalIniFile(newIni, oldIni = None, rawParser = True, separator = ',', overwrite = True):
 
     if rawParser:
         outConfig = configparser.RawConfigParser()
@@ -164,13 +151,21 @@ def incrementalIniFile(newIni, oldIni = None, rawParser = True, separator = ',')
             outConfig.add_section(section)
 
         for option in options:
-            #if outConfig.has_option(section, option) and (option == 'keys' or option =='handlers') \
-            #    and not re.search(newConfig.get(section, option), outConfig.get(section, option)):
+            # if the option exists in section and if option is keys always append the definition
             if outConfig.has_option(section, option) and option == 'keys' \
                 and not re.search(newConfig.get(section, option), outConfig.get(section, option)):
 
                 newValue = outConfig.get(section, option) + separator + newConfig.get(section, option)
-            else:
+
+            # if the option exists in section and if option is not keys you can overwrite
+            elif outConfig.has_option(section, option) and overwrite:
+                newValue = newConfig.get(section, option)
+
+            elif outConfig.has_option(section, option) and not overwrite:
+                newValue = outConfig.get(section, option)
+
+            # if the option not exists in section add it
+            elif not outConfig.has_option(section, option):
                 newValue = newConfig.get(section, option)
 
             outConfig.set(section, option, newValue)

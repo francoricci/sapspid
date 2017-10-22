@@ -86,16 +86,16 @@ class easyspidHandler(RequestHandler):
 
         if spbuild.search(self.request.path):
             sp = spbuild.search(self.request.path).group(1)
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.buildMetadata, sp)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.buildMetadata, sp)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif spget.search(self.request.path):
             sp = spget.search(self.request.path).group(1)
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.getMetadata, sp)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.getMetadata, sp)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif prvd.search(self.request.path):
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.getProviders)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.getProviders)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif athn.search(self.request.path):
@@ -103,7 +103,7 @@ class easyspidHandler(RequestHandler):
             idp = super(self.__class__, self).get_argument('idp')
             attributeIndex = super(self.__class__, self).get_argument('attrindex')
             binding = super(self.__class__, self).get_argument('binding')
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.buildAthnReq, sp, idp, attributeIndex, binding)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.buildAthnReq, sp, idp, attributeIndex, binding)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif loginauth.search(self.request.path):
@@ -112,7 +112,7 @@ class easyspidHandler(RequestHandler):
             attributeIndex = super(self.__class__, self).get_argument('attrindex')
             binding = super(self.__class__, self).get_argument('binding')
             srelay = super(self.__class__, self).get_argument('srelay')
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.loginAuthnReq, sp, idp,attributeIndex, binding, srelay)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.loginAuthnReq, sp, idp,attributeIndex, binding, srelay)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
             if response_obj.error.httpcode == 200 and binding == 'redirect':
@@ -161,21 +161,21 @@ class easyspidHandler(RequestHandler):
 
         if metadataVerify.search(self.request.path):
             sp = metadataVerify.search(self.request.path).group(1)
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verifySpMetadata, sp)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.verifySpMetadata, sp)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif validateAssertion.search(self.request.path):
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.validateAssertion)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.validateAssertion)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif authnverify.search(self.request.path):
             sp = authnverify.search(self.request.path).group(1)
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verifyAuthnRequest, sp)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.verifyAuthnRequest, sp)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif response.search(self.request.path):
             sp = response.search(self.request.path).group(1)
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.processResponse, sp)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.processResponse, sp)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
             if response_obj.error.httpcode == 200:

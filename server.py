@@ -21,17 +21,17 @@ import asyncio
 
 
 """
-Load default core logging file config
+Load default logging file config
 """
 path = os.path.dirname(os.path.realpath(__file__))
 globalsObj.loggingConfig = commonlib.incrementalIniFile(globalsObj.CONFIG_LOGGING_PATH)
-globalsObj.loggingFile = globalsObj.CONFIG_LOGGING_PATH
+#globalsObj.loggingFile = globalsObj.CONFIG_LOGGING_PATH
 logging.config.fileConfig(globalsObj.loggingConfig)
 
 """
 read config file passed in command line and load core server wspath
 """
-#globalsObj.ws_configuration = []
+#write root location
 globalsObj.rootFolder = path
 globalsObj.cmdLineoOptions = commonlib.commandLine(globalsObj.CONFIG_FILE_PATH)
 globalsObj.configuration = commonlib.configure(globalsObj.CONFIG_FILE_PATH)
@@ -49,11 +49,6 @@ if os.path.isfile(os.path.join(path, globalsObj.configuration.get('logging','con
 else:
     globalsObj.lastLoggingFile = globalsObj.configuration.get('logging','conf')
 
-#"""
-#Load core server wspath
-#"""
-#globalsObj.ws_configuration.append(commonlib.configure(globalsObj.configuration.get('wspath','conf')))
-#globalsObj.ws_configuration = commonlib.configure(globalsObj.configuration.get('wspath','conf'))
 
 """
 scan module dir to load modules default logging file
@@ -83,7 +78,6 @@ with os.scandir(globalsObj.modules_basedir) as it:
 
             wspath_name = os.path.join(globalsObj.modules_basedir, module.name, 'conf', 'wspath.ini')
             if os.path.isfile(wspath_name):
-                #globalsObj.ws_configuration.append(commonlib.configure(wspath_name))
                 globalsObj.ws_configuration = commonlib.configure(wspath_name, globalsObj.ws_configuration)
 
             tmp['import'] = ', '.join(tmp['import'])
@@ -96,7 +90,7 @@ load last configuration
 globalsObj.ws_configuration = commonlib.configure(globalsObj.configuration.get('wspath','conf'), globalsObj.ws_configuration)
 globalsObj.errors_configuration = commonlib.configure(globalsObj.configuration.get('errors','conf'), globalsObj.errors_configuration)
 
-globalsObj.loggingConfig = commonlib.incrementalIniFile(globalsObj.lastLoggingFile, globalsObj.loggingConfig)
+globalsObj.loggingConfig = commonlib.incrementalIniFile(globalsObj.lastLoggingFile, globalsObj.loggingConfig, overwrite = True)
 logging.config.fileConfig(globalsObj.loggingConfig, disable_existing_loggers=False)
 
 """
@@ -110,16 +104,14 @@ for module in modules_to_import:
     logging.getLogger(__name__).info("Loaded module %s.%s" % (module['from'], module['import']))
     exec("from %s import %s" % (module['from'], module['import']))
 
+
 class WebApp(tornado.web.Application):
     def __init__(self, configuration, ws_configuration_list):
-
-        #self.globalsObj = globalsObj
 
         """ configure TCP server """
         try:
             """ Building URL """
             handlers = []
-            #for ws_configuration in ws_configuration_list:
             for i, val in enumerate(ws_configuration_list.sections()):
                 if val != 'conf':
                     tempDict = dict(ws_configuration_list.items(val))
@@ -154,11 +146,11 @@ if __name__ == '__main__':
         ioloop.set_debug('enabled')
 
     tcp_conf = dict(globalsObj.configuration.items('TCP'))
-
     # write pid file
     commonlib.writePid(globalsObj.configuration.get('pid','file'))
 
     # create app
+    globalsObj.ws_configuration.read_dict(globalsObj.deniedPath)
     webapp = WebApp(globalsObj.configuration, globalsObj.ws_configuration)
 
     # set backend to serilize objects
@@ -166,7 +158,8 @@ if __name__ == '__main__':
     jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, indent=4)
 
     try:
-        sockets = tornado.netutil.bind_sockets(tcp_conf['port'],tcp_conf['address'], family=socket.AF_INET, backlog = int(tcp_conf['backlog']))
+        sockets = tornado.netutil.bind_sockets(tcp_conf['port'],tcp_conf['address'], family=socket.AF_INET, backlog = int(tcp_conf['backlog']),
+                                               reuse_port=bool(tcp_conf['reuseport']))
 
         rootLogger.warning("Found %s processor/s" % (tornado.process.cpu_count()))
         if (tcp_conf['num_processes'] == '0'):
@@ -185,24 +178,6 @@ if __name__ == '__main__':
         """ main loop """
         asyncio.get_event_loop().set_default_executor(webapp.executor)
         asyncio.get_event_loop().run_forever()
-
-    except socket.error as error:
-        rootLogger.error("error on server socket: %s" % (error))
-
-    except Exception as exc:
-        rootLogger.error("General error catch: %s" % (exc))
-ers'),
-                protocol=globalsObj.configuration.get('HTTP','protocol'))
-
-        server.add_sockets(sockets)
-
-        """ main loop """
-        #ioloop.run_until_complete(create_pool(webapp))
-        #ioloop.run_forever()
-
-        tornado.ioloop.IOLoop.configure('tornado.platform.asyncio.AsyncIOLoop')
-        mainIOLoop = tornado.ioloop.IOLoop.current()
-        mainIOLoop.start()
 
     except socket.error as error:
         rootLogger.error("error on server socket: %s" % (error))

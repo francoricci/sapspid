@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.4",
+    "version": "1.7",
     "title": "SP Spid",
     "description": "SPID gateway. API to easily work with SPID",
     "license": {
@@ -29,8 +29,8 @@
     }
   ],
   "schemes": [
-    "http",
-    "https"
+    "https",
+    "http"
   ],
   "consumes": [
     "application/json"

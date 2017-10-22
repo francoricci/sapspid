@@ -53,12 +53,12 @@ class jwtokenHandler(RequestHandler):
 
         if re.match("/api/jwt/getByType", self.request.path):
             #task da eseguire per il get
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.getByType)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.getByType)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         elif re.match("/api/jwt/verify", self.request.path):
              #task da eseguire per il get
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verify)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.verify)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         self.writeLog(response_obj)
@@ -70,7 +70,7 @@ class jwtokenHandler(RequestHandler):
         self.set_default_headers()
 
         if re.match("/api/jwt/verify", self.request.path):
-            response_obj = await asyncio.get_event_loop().run_in_executor(None, self.verify)
+            response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.verify)
             #response_obj = await tornado.platform.asyncio.to_tornado_future(fut)
 
         self.writeLog(response_obj)

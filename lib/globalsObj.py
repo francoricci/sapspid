@@ -27,3 +27,9 @@ jsonReqSchema = {
       },
       "additionalProperties": False
     }
+
+deniedPath = {'denied':
+                {'pattern': "r\"/.*\"",
+                 'handler': 'MainHandler.denied'
+                }
+            }
