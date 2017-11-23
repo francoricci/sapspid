@@ -19,7 +19,6 @@ import commonlib
 from tornado.platform.asyncio import AsyncIOMainLoop
 import asyncio
 
-
 """
 Load default logging file config
 """
@@ -93,6 +92,19 @@ globalsObj.errors_configuration = commonlib.configure(globalsObj.configuration.g
 globalsObj.loggingConfig = commonlib.incrementalIniFile(globalsObj.lastLoggingFile, globalsObj.loggingConfig, overwrite = True)
 logging.config.fileConfig(globalsObj.loggingConfig, disable_existing_loggers=False)
 
+# install async loop
+if globalsObj.configuration.getboolean('Application','libuv'):
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+AsyncIOMainLoop().install()
+globalsObj.ioloop = asyncio.get_event_loop()
+
+# set asyncio debug
+if globalsObj.configuration.getboolean('Application','debug'):
+    globalsObj.ioloop.set_debug('enabled')
+
+
 """
 core handlers
 """
@@ -137,14 +149,6 @@ class WebApp(tornado.web.Application):
 if __name__ == '__main__':
     rootLogger = logging.getLogger(__name__)
 
-    # install async loop
-    AsyncIOMainLoop().install()
-    ioloop = asyncio.get_event_loop()
-
-    # set asyncio debug
-    if globalsObj.configuration.getboolean('Application','debug'):
-        ioloop.set_debug('enabled')
-
     tcp_conf = dict(globalsObj.configuration.items('TCP'))
     # write pid file
     commonlib.writePid(globalsObj.configuration.get('pid','file'))
@@ -176,8 +180,8 @@ if __name__ == '__main__':
         server.add_sockets(sockets)
 
         """ main loop """
-        asyncio.get_event_loop().set_default_executor(webapp.executor)
-        asyncio.get_event_loop().run_forever()
+        globalsObj.ioloop.set_default_executor(webapp.executor)
+        globalsObj.ioloop.run_forever()
 
     except socket.error as error:
         rootLogger.error("error on server socket: %s" % (error))

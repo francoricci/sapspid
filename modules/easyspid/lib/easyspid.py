@@ -11,6 +11,7 @@ from lxml import etree
 from hashlib import sha1, sha256, sha384, sha512
 import base64
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
+import asyncio
 
 ESPID_ERRORS_FILE_PATH = "modules/easyspid/conf/errors.ini"
 ESPID_CONFIG_FILE_PATH = "modules/easyspid/conf/easyspid.ini"
@@ -20,17 +21,11 @@ easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH)
 if globalsObj.configuration.has_option('easyspid','conf'):
     easyspid_file_configuration = commonlib.configure(globalsObj.configuration.get('easyspid','conf'),easyspid_file_configuration)
 
-# try:
-#     easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH, globalsObj.configuration.get('easyspid','conf'))
-# except BaseException as error:
-#     easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH)
-
 # carica i messaggi di errore del modulo
 easyspid_error_configuration = commonlib.configure(ESPID_ERRORS_FILE_PATH)
 
 # istanzia le sezioni del fle di configurazione nel file globalsObj
 globalsObj.easyspid_DbMaster_conf = dict(easyspid_file_configuration.items('DbMaster'))
-globalsObj.easyspid_DbSlave_conf = dict(easyspid_file_configuration.items('DbSlave'))
 globalsObj.easyspid_postFormPath = easyspid_file_configuration.get('AuthnRequest','postFormPath')
 globalsObj.easyspid_responseFormPath = easyspid_file_configuration.get('Response','responseFormPath')
 
@@ -49,36 +44,16 @@ except Exception as error:
     globalsObj.DbConnections = dict()
 
 # connect to DB master
-dsnMaster = "host=" + easyspid_file_configuration.get('DbMaster','host') + \
-    " port=" + easyspid_file_configuration.get('DbMaster','port') + \
-    " dbname=" + easyspid_file_configuration.get('DbMaster','dbname')+ \
-    " user=" + easyspid_file_configuration.get('DbMaster','user') + \
-    " password=" + easyspid_file_configuration.get('DbMaster','password') + \
-    " application_name=" + easyspid_file_configuration.get('DbMaster','application_name')
+dsnMaster = ("postgres://%s:%s@%s:%s/%s?application_name=%s" % (easyspid_file_configuration.get('DbMaster','user'),
+            easyspid_file_configuration.get('DbMaster','password'), easyspid_file_configuration.get('DbMaster','host'),
+            easyspid_file_configuration.get('DbMaster','port'), easyspid_file_configuration.get('DbMaster','dbname'),
+            easyspid_file_configuration.get('DbMaster','application_name')))
 
 globalsObj.DbConnections['samlMasterdsn'] = dsnMaster
 
-# connect to DB slave
-dsnSlave = "host=" + easyspid_file_configuration.get('DbSlave','host') + \
-    " port=" + easyspid_file_configuration.get('DbSlave','port') + \
-    " dbname=" + easyspid_file_configuration.get('DbSlave','dbname')+ \
-    " user=" + easyspid_file_configuration.get('DbSlave','user') + \
-    " password=" + easyspid_file_configuration.get('DbSlave','password') + \
-    " application_name=" + easyspid_file_configuration.get('DbSlave','application_name')
-
-globalsObj.DbConnections['samlSlavedsn'] = dsnSlave
-
-globalsObj.DbConnections['samlDbPollMaster'] = {'max_conn': easyspid_file_configuration.getint('dbpool','max_conn'),
+globalsObj.DbConnections['samlDbPoll'] = {'max_conn': easyspid_file_configuration.getint('dbpool','max_conn'),
                                                 'min_conn': easyspid_file_configuration.getint('dbpool','min_conn'),
                                                 'dsn': dsnMaster}
-
-globalsObj.DbConnections['samlDbPollSlave'] = {'max_conn': easyspid_file_configuration.getint('dbpool','max_conn'),
-                                               'min_conn': easyspid_file_configuration.getint('dbpool','min_conn'),
-                                                'dsn': dsnSlave}
-
-# inizializza dB object
-globalsObj.DbConnections['samlDb'] = easyspid.lib.database.Database()
-globalsObj.DbConnections['samlDb'].prepare_stmts()
 
 # set some settings
 globalsObj.easyspidSettings = dict()
@@ -95,22 +70,36 @@ globalsObj.easyspidSettings['idp'] = {
     "x509cert": "<onelogin_connector_cert>"
   }
 
+# inizializza Db object e pool
+globalsObj.DbConnections['samlDb'] = easyspid.lib.database.Database()
+pool = globalsObj.ioloop.run_until_complete(easyspid.lib.database.init_pool(globalsObj.DbConnections['samlDbPoll'],
+                               init = globalsObj.DbConnections['samlDb'].prepare_statements))
+globalsObj.DbConnections['samlDb'].set_pool(pool)
 
-def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT, close = True):
+# inizializza dB object
+#globalsObj.DbConnections['samlDb'] = easyspid.lib.database.Database()
+#globalsObj.DbConnections['samlDb'].prepare_stmts()
+
+async def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT, close = True):
     result = {'error':0, 'result': None}
 
-    # acquisisci una connessione dal pool
-    #if conn is None:
-    #    conn = easyspid.lib.database.Database(globalsObj.DbConnections['samlDbPollSlave']['pool'])
-    #sp_settings = conn.get_sp_settings(cod_sp, close)
-
     dbobj = globalsObj.DbConnections['samlDb']
-    sp_settings = dbobj.makeQuery("EXECUTE get_sp_settings(%s)",
-                        [cod_sp],type = dbobj.stmts['get_providers']['pool'], close=close)
 
-    if sp_settings['error'] == 0 and sp_settings['result'] != None:
-        # genera risposta tutto ok
+    task1 = asyncio.ensure_future(dbobj.execute_statment("get_sp_settings('%s')" % cod_sp), loop=globalsObj.ioloop)
+
+    if cod_idp is not None:
+        task2 = asyncio.ensure_future(dbobj.execute_statment("get_prvd_metadta('%s')" % cod_idp), loop=globalsObj.ioloop)
+        await task2
+        idp_metadata = task2.result()
+
+    await task1
+    sp_settings = task1.result()
+
+    if sp_settings['error'] == 0 and sp_settings['result'] is not None:
+        # genera risposta tutto o
+        sp_settings['result'] = sp_settings['result'][0]
         sp_settings['result']['settings']['idp'] = globalsObj.easyspidSettings['idp']
+        sp_settings['result']['settings']['sp']['cod_sp'] = cod_sp
         sp_settings['result']['settings']['sp']['x509cert'] = sp_settings['result']['public_key']
         sp_settings['result']['settings']['sp']['privateKey'] = sp_settings['result']['private_key']
         sp_settings['result']['settings']['sp']['x509cert_fingerprint'] = sp_settings['result']['fingerprint']
@@ -119,16 +108,15 @@ def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.BINDING
         sp_settings['result']['settings']['contactPerson'] = sp_settings['result']['advanced_settings']['contactPerson']
         sp_settings['result']['settings']['organization'] = sp_settings['result']['advanced_settings']['organization']
 
-        if cod_idp != None:
-            #idp_metadata = globalsObj.DbConnections['samlSlave'].get_prvd_metadta(cod_idp)
-            #idp_metadata = conn.get_prvd_metadta(cod_idp, close)
+        if cod_idp is not None:
 
-            idp_metadata = dbobj.makeQuery("EXECUTE get_prvd_metadta(%s)",
-                        [cod_idp],type = dbobj.stmts['get_providers']['pool'], close=close)
+            #idp_metadata = dbobj.makeQuery("EXECUTE get_prvd_metadta(%s)",
+            #            [cod_idp],type = dbobj.stmts['get_providers']['pool'], close=close)
+            #idp_metadata = await dbobj.execute_statment("get_prvd_metadta('%s')" % cod_idp)
 
-            if idp_metadata['error'] == 0 and idp_metadata['result'] != None:
+            if idp_metadata['error'] == 0 and idp_metadata['result'] is not None:
 
-                metadata = idp_metadata['result']['xml']
+                metadata = idp_metadata['result'][0]['xml']
                 idp_data = OneLogin_Saml2_IdPMetadataParser.parse(metadata, required_sso_binding= binding, required_slo_binding=binding)
                 idp_settings = idp_data['idp']
 
@@ -141,17 +129,19 @@ def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.BINDING
                 if 'x509cert' in idp_settings:
                     sp_settings['result']['settings']['idp']['x509cert'] = idp_settings['x509cert']
 
-                sp_settings['result']['settings']['idp']['x509cert_fingerprint'] = idp_metadata['result']['fingerprint']
-                sp_settings['result']['settings']['idp']['x509cert_fingerprintalg'] = idp_metadata['result']['fingerprintalg']
+                sp_settings['result']['settings']['idp']['x509cert_fingerprint'] = idp_metadata['result'][0]['fingerprint']
+                sp_settings['result']['settings']['idp']['x509cert_fingerprintalg'] = idp_metadata['result'][0]['fingerprintalg']
                 sp_settings['result']['settings']['idp']['metadata'] = metadata
+                sp_settings['result']['settings']['idp']['cod_idp'] = cod_idp
 
                 result['result'] = sp_settings['result']['settings']
                 return result
 
             elif idp_metadata['error'] > 0:
                 result['error'] = 1
-                response_obj = ResponseObj(debugMessage=idp_metadata['result'].pgerror, httpcode=500,
-                            devMessage=("PostgreSQL error code: %s" % idp_metadata['result'].pgcode))
+                response_obj = ResponseObj(debugMessage="PostgreSQL error code: %s" % idp_metadata['result'].sqlstate,
+                            httpcode=500,
+                            devMessage=("PostgreSQL error message: %s" % idp_metadata['result'].message))
                 response_obj.setError('easyspid105')
                 result['result'] = response_obj
 
@@ -164,8 +154,9 @@ def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.BINDING
 
     elif sp_settings['error'] > 0:
         result['error'] = 1
-        response_obj = ResponseObj(debugMessage=sp_settings['result'].pgerror, httpcode=500,
-                    devMessage=("PostgreSQL error code: %s" % sp_settings['result'].pgcode))
+        response_obj = ResponseObj(debugMessage="PostgreSQL error code: %s" % sp_settings['result'].sqlstate,
+                    httpcode=500,
+                    devMessage=("PostgreSQL error message: %s" % sp_settings['result'].message))
         response_obj.setError('easyspid105')
         result['result'] = response_obj
 

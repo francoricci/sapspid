@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.6.2
+-- Dumped from database version 9.6.3
 -- Dumped by pg_dump version 9.6.3
 
--- Started on 2017-08-01 00:17:10 CEST
+-- Started on 2017-11-23 17:39:25 CET
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,7 +17,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 11 (class 2615 OID 16413)
+-- TOC entry 10 (class 2615 OID 16396)
 -- Name: jwt; Type: SCHEMA; Schema: -; Owner: easyspid
 --
 
@@ -27,7 +27,7 @@ CREATE SCHEMA jwt;
 ALTER SCHEMA jwt OWNER TO easyspid;
 
 --
--- TOC entry 10 (class 2615 OID 16412)
+-- TOC entry 11 (class 2615 OID 16397)
 -- Name: lib; Type: SCHEMA; Schema: -; Owner: easyspid
 --
 
@@ -37,7 +37,7 @@ CREATE SCHEMA lib;
 ALTER SCHEMA lib OWNER TO easyspid;
 
 --
--- TOC entry 13 (class 2615 OID 77206)
+-- TOC entry 13 (class 2615 OID 18396)
 -- Name: log; Type: SCHEMA; Schema: -; Owner: easyspid
 --
 
@@ -47,7 +47,7 @@ CREATE SCHEMA log;
 ALTER SCHEMA log OWNER TO easyspid;
 
 --
--- TOC entry 12 (class 2615 OID 33833)
+-- TOC entry 12 (class 2615 OID 16398)
 -- Name: saml; Type: SCHEMA; Schema: -; Owner: easyspid
 --
 
@@ -65,7 +65,7 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2803 (class 0 OID 0)
+-- TOC entry 2800 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
@@ -74,7 +74,7 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
--- TOC entry 1 (class 3079 OID 16407)
+-- TOC entry 1 (class 3079 OID 16399)
 -- Name: plpython3u; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -82,7 +82,7 @@ CREATE EXTENSION IF NOT EXISTS plpython3u WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2804 (class 0 OID 0)
+-- TOC entry 2801 (class 0 OID 0)
 -- Dependencies: 1
 -- Name: EXTENSION plpython3u; Type: COMMENT; Schema: -; Owner: 
 --
@@ -91,7 +91,7 @@ COMMENT ON EXTENSION plpython3u IS 'PL/Python3U untrusted procedural language';
 
 
 --
--- TOC entry 3 (class 3079 OID 16396)
+-- TOC entry 3 (class 3079 OID 16404)
 -- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -99,7 +99,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
 --
--- TOC entry 2805 (class 0 OID 0)
+-- TOC entry 2802 (class 0 OID 0)
 -- Dependencies: 3
 -- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
@@ -110,7 +110,7 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 SET search_path = jwt, pg_catalog;
 
 --
--- TOC entry 247 (class 1255 OID 32770)
+-- TOC entry 246 (class 1255 OID 16415)
 -- Name: header_validator(); Type: FUNCTION; Schema: jwt; Owner: easyspid
 --
 
@@ -138,7 +138,7 @@ $$;
 ALTER FUNCTION jwt.header_validator() OWNER TO easyspid;
 
 --
--- TOC entry 248 (class 1255 OID 32771)
+-- TOC entry 247 (class 1255 OID 16416)
 -- Name: payload_validator(); Type: FUNCTION; Schema: jwt; Owner: easyspid
 --
 
@@ -166,7 +166,7 @@ $$;
 ALTER FUNCTION jwt.payload_validator() OWNER TO easyspid;
 
 --
--- TOC entry 255 (class 1255 OID 33823)
+-- TOC entry 248 (class 1255 OID 16417)
 -- Name: schemas_validator(); Type: FUNCTION; Schema: jwt; Owner: easyspid
 --
 
@@ -207,7 +207,7 @@ ALTER FUNCTION jwt.schemas_validator() OWNER TO easyspid;
 SET search_path = lib, pg_catalog;
 
 --
--- TOC entry 253 (class 1255 OID 32949)
+-- TOC entry 249 (class 1255 OID 16418)
 -- Name: config_token_bytype(character varying); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -247,8 +247,8 @@ $$;
 ALTER FUNCTION lib.config_token_bytype(incod_type character varying) OWNER TO easyspid;
 
 --
--- TOC entry 2806 (class 0 OID 0)
--- Dependencies: 253
+-- TOC entry 2803 (class 0 OID 0)
+-- Dependencies: 249
 -- Name: FUNCTION config_token_bytype(incod_type character varying); Type: COMMENT; Schema: lib; Owner: easyspid
 --
 
@@ -256,7 +256,7 @@ COMMENT ON FUNCTION config_token_bytype(incod_type character varying) IS 'Config
 
 
 --
--- TOC entry 251 (class 1255 OID 32948)
+-- TOC entry 250 (class 1255 OID 16419)
 -- Name: create_token_bytype(character varying); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -291,7 +291,7 @@ $$;
 ALTER FUNCTION lib.create_token_bytype(incod_type character varying) OWNER TO easyspid;
 
 --
--- TOC entry 249 (class 1255 OID 32858)
+-- TOC entry 251 (class 1255 OID 16420)
 -- Name: encode_token(text, text, character varying, text); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -316,8 +316,8 @@ $$;
 ALTER FUNCTION lib.encode_token(payload text, secretkey text, algorithm character varying, headers text, OUT new_token text) OWNER TO easyspid;
 
 --
--- TOC entry 2807 (class 0 OID 0)
--- Dependencies: 249
+-- TOC entry 2804 (class 0 OID 0)
+-- Dependencies: 251
 -- Name: FUNCTION encode_token(payload text, secretkey text, algorithm character varying, headers text, OUT new_token text); Type: COMMENT; Schema: lib; Owner: easyspid
 --
 
@@ -325,7 +325,7 @@ COMMENT ON FUNCTION encode_token(payload text, secretkey text, algorithm charact
 
 
 --
--- TOC entry 250 (class 1255 OID 32933)
+-- TOC entry 252 (class 1255 OID 16421)
 -- Name: encode_token_bycod(character varying); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -357,25 +357,27 @@ $_$;
 ALTER FUNCTION lib.encode_token_bycod(cod character varying, OUT new_token text) OWNER TO easyspid;
 
 --
--- TOC entry 258 (class 1255 OID 77222)
+-- TOC entry 259 (class 1255 OID 18395)
 -- Name: get_current_timestamp(); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
 CREATE FUNCTION get_current_timestamp() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
+
 BEGIN
 NEW.date = now();
 RETURN NEW;
 END;
+
 $$;
 
 
 ALTER FUNCTION lib.get_current_timestamp() OWNER TO easyspid;
 
 --
--- TOC entry 261 (class 1255 OID 93612)
--- Name: getx509cert(xml); Type: FUNCTION; Schema: lib; Owner: easyspid
+-- TOC entry 261 (class 1255 OID 19148)
+-- Name: getx509cert(xml); Type: FUNCTION; Schema: lib; Owner: root
 --
 
 CREATE FUNCTION getx509cert(xmldata xml) RETURNS text
@@ -383,7 +385,7 @@ CREATE FUNCTION getx509cert(xmldata xml) RETURNS text
     AS $$
 
 from lxml import etree
-    
+
 """
 Get x509 cert of a saml assertion
 
@@ -410,10 +412,10 @@ else:
 $$;
 
 
-ALTER FUNCTION lib.getx509cert(xmldata xml) OWNER TO easyspid;
+ALTER FUNCTION lib.getx509cert(xmldata xml) OWNER TO root;
 
 --
--- TOC entry 246 (class 1255 OID 24594)
+-- TOC entry 253 (class 1255 OID 16422)
 -- Name: jsonvalidate(jsonb, jsonb); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -437,7 +439,7 @@ $$;
 ALTER FUNCTION lib.jsonvalidate(jsonobj jsonb, jschema jsonb) OWNER TO easyspid;
 
 --
--- TOC entry 252 (class 1255 OID 32951)
+-- TOC entry 254 (class 1255 OID 16423)
 -- Name: verify_token(text, text, character varying, character varying, character varying, boolean); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -461,8 +463,8 @@ $$;
 ALTER FUNCTION lib.verify_token(intoken text, secretkey text, alg character varying, aud character varying, iss character varying, inverify boolean, OUT new_token jsonb) OWNER TO easyspid;
 
 --
--- TOC entry 2808 (class 0 OID 0)
--- Dependencies: 252
+-- TOC entry 2805 (class 0 OID 0)
+-- Dependencies: 254
 -- Name: FUNCTION verify_token(intoken text, secretkey text, alg character varying, aud character varying, iss character varying, inverify boolean, OUT new_token jsonb); Type: COMMENT; Schema: lib; Owner: easyspid
 --
 
@@ -470,7 +472,7 @@ COMMENT ON FUNCTION verify_token(intoken text, secretkey text, alg character var
 
 
 --
--- TOC entry 254 (class 1255 OID 32959)
+-- TOC entry 256 (class 1255 OID 16424)
 -- Name: verify_token_bycod(character varying, boolean); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -505,7 +507,7 @@ $_$;
 ALTER FUNCTION lib.verify_token_bycod(cod character varying, inverify boolean, OUT new_token jsonb) OWNER TO easyspid;
 
 --
--- TOC entry 256 (class 1255 OID 42032)
+-- TOC entry 257 (class 1255 OID 16425)
 -- Name: x509_fingerprint(text, character varying); Type: FUNCTION; Schema: lib; Owner: easyspid
 --
 
@@ -562,7 +564,7 @@ ALTER FUNCTION lib.x509_fingerprint(x509cert text, alg character varying) OWNER 
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 259 (class 1255 OID 42120)
+-- TOC entry 258 (class 1255 OID 16426)
 -- Name: assertions(); Type: FUNCTION; Schema: saml; Owner: easyspid
 --
 
@@ -603,7 +605,7 @@ $_$;
 ALTER FUNCTION saml.assertions() OWNER TO easyspid;
 
 --
--- TOC entry 257 (class 1255 OID 42033)
+-- TOC entry 255 (class 1255 OID 16428)
 -- Name: get_x509_fingerprint(); Type: FUNCTION; Schema: saml; Owner: easyspid
 --
 
@@ -620,14 +622,14 @@ $$;
 ALTER FUNCTION saml.get_x509_fingerprint() OWNER TO easyspid;
 
 --
--- TOC entry 260 (class 1255 OID 93614)
--- Name: getx509cert(); Type: FUNCTION; Schema: saml; Owner: easyspid
+-- TOC entry 260 (class 1255 OID 19149)
+-- Name: getx509cert(); Type: FUNCTION; Schema: saml; Owner: root
 --
 
 CREATE FUNCTION getx509cert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-DECLARE 
+DECLARE
      codCert varchar;
      certx509 text;
 BEGIN
@@ -648,7 +650,7 @@ END;
 $$;
 
 
-ALTER FUNCTION saml.getx509cert() OWNER TO easyspid;
+ALTER FUNCTION saml.getx509cert() OWNER TO root;
 
 SET search_path = jwt, pg_catalog;
 
@@ -657,7 +659,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- TOC entry 192 (class 1259 OID 24579)
+-- TOC entry 191 (class 1259 OID 16429)
 -- Name: token; Type: TABLE; Schema: jwt; Owner: easyspid
 --
 
@@ -675,7 +677,7 @@ CREATE TABLE token (
 ALTER TABLE token OWNER TO easyspid;
 
 --
--- TOC entry 191 (class 1259 OID 24577)
+-- TOC entry 192 (class 1259 OID 16438)
 -- Name: token_ID_seq; Type: SEQUENCE; Schema: jwt; Owner: easyspid
 --
 
@@ -690,8 +692,8 @@ CREATE SEQUENCE "token_ID_seq"
 ALTER TABLE "token_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2809 (class 0 OID 0)
--- Dependencies: 191
+-- TOC entry 2806 (class 0 OID 0)
+-- Dependencies: 192
 -- Name: token_ID_seq; Type: SEQUENCE OWNED BY; Schema: jwt; Owner: easyspid
 --
 
@@ -699,7 +701,7 @@ ALTER SEQUENCE "token_ID_seq" OWNED BY token."ID";
 
 
 --
--- TOC entry 200 (class 1259 OID 32887)
+-- TOC entry 193 (class 1259 OID 16440)
 -- Name: token_payload; Type: TABLE; Schema: jwt; Owner: easyspid
 --
 
@@ -714,7 +716,7 @@ CREATE TABLE token_payload (
 ALTER TABLE token_payload OWNER TO easyspid;
 
 --
--- TOC entry 199 (class 1259 OID 32885)
+-- TOC entry 194 (class 1259 OID 16449)
 -- Name: token_payload_ID_seq; Type: SEQUENCE; Schema: jwt; Owner: easyspid
 --
 
@@ -729,8 +731,8 @@ CREATE SEQUENCE "token_payload_ID_seq"
 ALTER TABLE "token_payload_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2810 (class 0 OID 0)
--- Dependencies: 199
+-- TOC entry 2807 (class 0 OID 0)
+-- Dependencies: 194
 -- Name: token_payload_ID_seq; Type: SEQUENCE OWNED BY; Schema: jwt; Owner: easyspid
 --
 
@@ -738,7 +740,7 @@ ALTER SEQUENCE "token_payload_ID_seq" OWNED BY token_payload."ID";
 
 
 --
--- TOC entry 194 (class 1259 OID 24605)
+-- TOC entry 195 (class 1259 OID 16451)
 -- Name: token_schemas; Type: TABLE; Schema: jwt; Owner: easyspid
 --
 
@@ -757,7 +759,7 @@ CREATE TABLE token_schemas (
 ALTER TABLE token_schemas OWNER TO easyspid;
 
 --
--- TOC entry 193 (class 1259 OID 24603)
+-- TOC entry 196 (class 1259 OID 16461)
 -- Name: token_schemas_ID_seq; Type: SEQUENCE; Schema: jwt; Owner: easyspid
 --
 
@@ -772,8 +774,8 @@ CREATE SEQUENCE "token_schemas_ID_seq"
 ALTER TABLE "token_schemas_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2811 (class 0 OID 0)
--- Dependencies: 193
+-- TOC entry 2808 (class 0 OID 0)
+-- Dependencies: 196
 -- Name: token_schemas_ID_seq; Type: SEQUENCE OWNED BY; Schema: jwt; Owner: easyspid
 --
 
@@ -781,7 +783,7 @@ ALTER SEQUENCE "token_schemas_ID_seq" OWNED BY token_schemas."ID";
 
 
 --
--- TOC entry 198 (class 1259 OID 32805)
+-- TOC entry 197 (class 1259 OID 16463)
 -- Name: token_signature; Type: TABLE; Schema: jwt; Owner: easyspid
 --
 
@@ -799,7 +801,7 @@ CREATE TABLE token_signature (
 ALTER TABLE token_signature OWNER TO easyspid;
 
 --
--- TOC entry 197 (class 1259 OID 32803)
+-- TOC entry 198 (class 1259 OID 16474)
 -- Name: token_signature_ID_seq; Type: SEQUENCE; Schema: jwt; Owner: easyspid
 --
 
@@ -814,8 +816,8 @@ CREATE SEQUENCE "token_signature_ID_seq"
 ALTER TABLE "token_signature_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2812 (class 0 OID 0)
--- Dependencies: 197
+-- TOC entry 2809 (class 0 OID 0)
+-- Dependencies: 198
 -- Name: token_signature_ID_seq; Type: SEQUENCE OWNED BY; Schema: jwt; Owner: easyspid
 --
 
@@ -823,7 +825,7 @@ ALTER SEQUENCE "token_signature_ID_seq" OWNED BY token_signature."ID";
 
 
 --
--- TOC entry 196 (class 1259 OID 32791)
+-- TOC entry 199 (class 1259 OID 16476)
 -- Name: token_type; Type: TABLE; Schema: jwt; Owner: easyspid
 --
 
@@ -837,7 +839,7 @@ CREATE TABLE token_type (
 ALTER TABLE token_type OWNER TO easyspid;
 
 --
--- TOC entry 195 (class 1259 OID 32789)
+-- TOC entry 200 (class 1259 OID 16483)
 -- Name: token_type_ID_seq; Type: SEQUENCE; Schema: jwt; Owner: easyspid
 --
 
@@ -852,8 +854,8 @@ CREATE SEQUENCE "token_type_ID_seq"
 ALTER TABLE "token_type_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2813 (class 0 OID 0)
--- Dependencies: 195
+-- TOC entry 2810 (class 0 OID 0)
+-- Dependencies: 200
 -- Name: token_type_ID_seq; Type: SEQUENCE OWNED BY; Schema: jwt; Owner: easyspid
 --
 
@@ -861,7 +863,7 @@ ALTER SEQUENCE "token_type_ID_seq" OWNED BY token_type."ID";
 
 
 --
--- TOC entry 201 (class 1259 OID 32960)
+-- TOC entry 201 (class 1259 OID 16485)
 -- Name: view_token; Type: VIEW; Schema: jwt; Owner: easyspid
 --
 
@@ -883,7 +885,7 @@ CREATE VIEW view_token AS
 ALTER TABLE view_token OWNER TO easyspid;
 
 --
--- TOC entry 202 (class 1259 OID 32964)
+-- TOC entry 202 (class 1259 OID 16489)
 -- Name: view_token_type; Type: VIEW; Schema: jwt; Owner: easyspid
 --
 
@@ -906,7 +908,7 @@ ALTER TABLE view_token_type OWNER TO easyspid;
 SET search_path = log, pg_catalog;
 
 --
--- TOC entry 221 (class 1259 OID 77209)
+-- TOC entry 220 (class 1259 OID 18397)
 -- Name: requests; Type: TABLE; Schema: log; Owner: easyspid
 --
 
@@ -924,7 +926,7 @@ CREATE TABLE requests (
 ALTER TABLE requests OWNER TO easyspid;
 
 --
--- TOC entry 220 (class 1259 OID 77207)
+-- TOC entry 221 (class 1259 OID 18405)
 -- Name: request_ID_seq; Type: SEQUENCE; Schema: log; Owner: easyspid
 --
 
@@ -939,8 +941,8 @@ CREATE SEQUENCE "request_ID_seq"
 ALTER TABLE "request_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2814 (class 0 OID 0)
--- Dependencies: 220
+-- TOC entry 2811 (class 0 OID 0)
+-- Dependencies: 221
 -- Name: request_ID_seq; Type: SEQUENCE OWNED BY; Schema: log; Owner: easyspid
 --
 
@@ -948,7 +950,7 @@ ALTER SEQUENCE "request_ID_seq" OWNED BY requests."ID";
 
 
 --
--- TOC entry 223 (class 1259 OID 77258)
+-- TOC entry 222 (class 1259 OID 18407)
 -- Name: responses; Type: TABLE; Schema: log; Owner: easyspid
 --
 
@@ -966,7 +968,7 @@ CREATE TABLE responses (
 ALTER TABLE responses OWNER TO easyspid;
 
 --
--- TOC entry 222 (class 1259 OID 77256)
+-- TOC entry 223 (class 1259 OID 18415)
 -- Name: respones_ID_seq; Type: SEQUENCE; Schema: log; Owner: easyspid
 --
 
@@ -981,8 +983,8 @@ CREATE SEQUENCE "respones_ID_seq"
 ALTER TABLE "respones_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2815 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 2812 (class 0 OID 0)
+-- Dependencies: 223
 -- Name: respones_ID_seq; Type: SEQUENCE OWNED BY; Schema: log; Owner: easyspid
 --
 
@@ -992,7 +994,7 @@ ALTER SEQUENCE "respones_ID_seq" OWNED BY responses."ID";
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 208 (class 1259 OID 33876)
+-- TOC entry 203 (class 1259 OID 16493)
 -- Name: assertions; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1014,7 +1016,7 @@ CREATE TABLE assertions (
 ALTER TABLE assertions OWNER TO easyspid;
 
 --
--- TOC entry 207 (class 1259 OID 33874)
+-- TOC entry 204 (class 1259 OID 16501)
 -- Name: assertions_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1029,8 +1031,8 @@ CREATE SEQUENCE "assertions_ID_seq"
 ALTER TABLE "assertions_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2816 (class 0 OID 0)
--- Dependencies: 207
+-- TOC entry 2813 (class 0 OID 0)
+-- Dependencies: 204
 -- Name: assertions_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1038,7 +1040,7 @@ ALTER SEQUENCE "assertions_ID_seq" OWNED BY assertions."ID";
 
 
 --
--- TOC entry 210 (class 1259 OID 33968)
+-- TOC entry 205 (class 1259 OID 16503)
 -- Name: assertions_type; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1052,7 +1054,7 @@ CREATE TABLE assertions_type (
 ALTER TABLE assertions_type OWNER TO easyspid;
 
 --
--- TOC entry 209 (class 1259 OID 33966)
+-- TOC entry 206 (class 1259 OID 16507)
 -- Name: assertions_type_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1067,8 +1069,8 @@ CREATE SEQUENCE "assertions_type_ID_seq"
 ALTER TABLE "assertions_type_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2817 (class 0 OID 0)
--- Dependencies: 209
+-- TOC entry 2814 (class 0 OID 0)
+-- Dependencies: 206
 -- Name: assertions_type_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1076,7 +1078,7 @@ ALTER SEQUENCE "assertions_type_ID_seq" OWNED BY assertions_type."ID";
 
 
 --
--- TOC entry 206 (class 1259 OID 33855)
+-- TOC entry 207 (class 1259 OID 16509)
 -- Name: signatures; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1089,15 +1091,15 @@ CREATE TABLE signatures (
     date timestamp with time zone DEFAULT now() NOT NULL,
     fingerprint text NOT NULL,
     fingerprintalg character varying(50) DEFAULT 'sha1'::character varying NOT NULL,
-    CONSTRAINT signatures_fingerprintalg_check CHECK (((fingerprintalg)::text = ANY ((ARRAY['sha1'::character varying, 'sha256'::character varying, 'sha384'::character varying, 'sha512'::character varying])::text[])))
+    CONSTRAINT signatures_fingerprintalg_check CHECK (((fingerprintalg)::text = ANY (ARRAY[('sha1'::character varying)::text, ('sha256'::character varying)::text, ('sha384'::character varying)::text, ('sha512'::character varying)::text])))
 );
 
 
 ALTER TABLE signatures OWNER TO easyspid;
 
 --
--- TOC entry 2818 (class 0 OID 0)
--- Dependencies: 206
+-- TOC entry 2815 (class 0 OID 0)
+-- Dependencies: 207
 -- Name: COLUMN signatures.private_key; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1105,8 +1107,8 @@ COMMENT ON COLUMN signatures.private_key IS 'x509 public key';
 
 
 --
--- TOC entry 2819 (class 0 OID 0)
--- Dependencies: 206
+-- TOC entry 2816 (class 0 OID 0)
+-- Dependencies: 207
 -- Name: COLUMN signatures.public_key; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1114,8 +1116,8 @@ COMMENT ON COLUMN signatures.public_key IS 'x509 PEM encoded certificate';
 
 
 --
--- TOC entry 2820 (class 0 OID 0)
--- Dependencies: 206
+-- TOC entry 2817 (class 0 OID 0)
+-- Dependencies: 207
 -- Name: COLUMN signatures.fingerprint; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1123,8 +1125,8 @@ COMMENT ON COLUMN signatures.fingerprint IS 'base64 encoded x509 certificate has
 
 
 --
--- TOC entry 2821 (class 0 OID 0)
--- Dependencies: 206
+-- TOC entry 2818 (class 0 OID 0)
+-- Dependencies: 207
 -- Name: COLUMN signatures.fingerprintalg; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1132,7 +1134,7 @@ COMMENT ON COLUMN signatures.fingerprintalg IS 'algorithm to use in fingerprint 
 
 
 --
--- TOC entry 205 (class 1259 OID 33853)
+-- TOC entry 208 (class 1259 OID 16519)
 -- Name: certifcates_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1147,8 +1149,8 @@ CREATE SEQUENCE "certifcates_ID_seq"
 ALTER TABLE "certifcates_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2822 (class 0 OID 0)
--- Dependencies: 205
+-- TOC entry 2819 (class 0 OID 0)
+-- Dependencies: 208
 -- Name: certifcates_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1156,7 +1158,7 @@ ALTER SEQUENCE "certifcates_ID_seq" OWNED BY signatures."ID";
 
 
 --
--- TOC entry 218 (class 1259 OID 42292)
+-- TOC entry 209 (class 1259 OID 16521)
 -- Name: jwt_settings; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1172,7 +1174,7 @@ CREATE TABLE jwt_settings (
 ALTER TABLE jwt_settings OWNER TO easyspid;
 
 --
--- TOC entry 217 (class 1259 OID 42290)
+-- TOC entry 210 (class 1259 OID 16525)
 -- Name: jwt_settings_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1187,8 +1189,8 @@ CREATE SEQUENCE "jwt_settings_ID_seq"
 ALTER TABLE "jwt_settings_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2823 (class 0 OID 0)
--- Dependencies: 217
+-- TOC entry 2820 (class 0 OID 0)
+-- Dependencies: 210
 -- Name: jwt_settings_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1196,7 +1198,7 @@ ALTER SEQUENCE "jwt_settings_ID_seq" OWNED BY jwt_settings."ID";
 
 
 --
--- TOC entry 214 (class 1259 OID 34628)
+-- TOC entry 211 (class 1259 OID 16527)
 -- Name: metadata; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1215,8 +1217,8 @@ CREATE TABLE metadata (
 ALTER TABLE metadata OWNER TO easyspid;
 
 --
--- TOC entry 2824 (class 0 OID 0)
--- Dependencies: 214
+-- TOC entry 2821 (class 0 OID 0)
+-- Dependencies: 211
 -- Name: TABLE metadata; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1224,7 +1226,7 @@ COMMENT ON TABLE metadata IS 'Put here Identity Providers Metadata';
 
 
 --
--- TOC entry 213 (class 1259 OID 34626)
+-- TOC entry 212 (class 1259 OID 16537)
 -- Name: metadata_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1239,8 +1241,8 @@ CREATE SEQUENCE "metadata_ID_seq"
 ALTER TABLE "metadata_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2825 (class 0 OID 0)
--- Dependencies: 213
+-- TOC entry 2822 (class 0 OID 0)
+-- Dependencies: 212
 -- Name: metadata_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1248,7 +1250,7 @@ ALTER SEQUENCE "metadata_ID_seq" OWNED BY metadata."ID";
 
 
 --
--- TOC entry 204 (class 1259 OID 33836)
+-- TOC entry 213 (class 1259 OID 16539)
 -- Name: providers; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1268,7 +1270,7 @@ CREATE TABLE providers (
 ALTER TABLE providers OWNER TO easyspid;
 
 --
--- TOC entry 203 (class 1259 OID 33834)
+-- TOC entry 214 (class 1259 OID 16551)
 -- Name: providers_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1283,8 +1285,8 @@ CREATE SEQUENCE "providers_ID_seq"
 ALTER TABLE "providers_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2826 (class 0 OID 0)
--- Dependencies: 203
+-- TOC entry 2823 (class 0 OID 0)
+-- Dependencies: 214
 -- Name: providers_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1292,7 +1294,7 @@ ALTER SEQUENCE "providers_ID_seq" OWNED BY providers."ID";
 
 
 --
--- TOC entry 212 (class 1259 OID 33992)
+-- TOC entry 215 (class 1259 OID 16553)
 -- Name: services; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
@@ -1311,8 +1313,8 @@ CREATE TABLE services (
 ALTER TABLE services OWNER TO easyspid;
 
 --
--- TOC entry 2827 (class 0 OID 0)
--- Dependencies: 212
+-- TOC entry 2824 (class 0 OID 0)
+-- Dependencies: 215
 -- Name: TABLE services; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1320,7 +1322,7 @@ COMMENT ON TABLE services IS 'Services requestd by user to service provider';
 
 
 --
--- TOC entry 211 (class 1259 OID 33990)
+-- TOC entry 216 (class 1259 OID 16562)
 -- Name: services_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1335,8 +1337,8 @@ CREATE SEQUENCE "services_ID_seq"
 ALTER TABLE "services_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2828 (class 0 OID 0)
--- Dependencies: 211
+-- TOC entry 2825 (class 0 OID 0)
+-- Dependencies: 216
 -- Name: services_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1344,28 +1346,27 @@ ALTER SEQUENCE "services_ID_seq" OWNED BY services."ID";
 
 
 --
--- TOC entry 216 (class 1259 OID 42085)
+-- TOC entry 217 (class 1259 OID 16564)
 -- Name: settings; Type: TABLE; Schema: saml; Owner: easyspid
 --
 
 CREATE TABLE settings (
     "ID" integer NOT NULL,
     cod_setting character varying(50) DEFAULT public.uuid_generate_v4() NOT NULL,
-    active boolean DEFAULT true NOT NULL,
+    active boolean DEFAULT false NOT NULL,
     cod_provider character varying(50) NOT NULL,
     settings jsonb,
     advanced_settings jsonb,
     date timestamp with time zone DEFAULT now() NOT NULL,
-    note text,
-    CONSTRAINT setting_active_check CHECK (((active = true) OR (active = false)))
+    note text
 );
 
 
 ALTER TABLE settings OWNER TO easyspid;
 
 --
--- TOC entry 2829 (class 0 OID 0)
--- Dependencies: 216
+-- TOC entry 2826 (class 0 OID 0)
+-- Dependencies: 217
 -- Name: TABLE settings; Type: COMMENT; Schema: saml; Owner: easyspid
 --
 
@@ -1373,7 +1374,7 @@ COMMENT ON TABLE settings IS 'Service Providers settings';
 
 
 --
--- TOC entry 215 (class 1259 OID 42083)
+-- TOC entry 218 (class 1259 OID 16574)
 -- Name: settings_ID_seq; Type: SEQUENCE; Schema: saml; Owner: easyspid
 --
 
@@ -1388,8 +1389,8 @@ CREATE SEQUENCE "settings_ID_seq"
 ALTER TABLE "settings_ID_seq" OWNER TO easyspid;
 
 --
--- TOC entry 2830 (class 0 OID 0)
--- Dependencies: 215
+-- TOC entry 2827 (class 0 OID 0)
+-- Dependencies: 218
 -- Name: settings_ID_seq; Type: SEQUENCE OWNED BY; Schema: saml; Owner: easyspid
 --
 
@@ -1397,7 +1398,7 @@ ALTER SEQUENCE "settings_ID_seq" OWNED BY settings."ID";
 
 
 --
--- TOC entry 219 (class 1259 OID 50643)
+-- TOC entry 219 (class 1259 OID 16576)
 -- Name: view_assertions; Type: VIEW; Schema: saml; Owner: easyspid
 --
 
@@ -1424,7 +1425,7 @@ ALTER TABLE view_assertions OWNER TO easyspid;
 SET search_path = jwt, pg_catalog;
 
 --
--- TOC entry 2498 (class 2604 OID 24582)
+-- TOC entry 2501 (class 2604 OID 16580)
 -- Name: token ID; Type: DEFAULT; Schema: jwt; Owner: easyspid
 --
 
@@ -1432,7 +1433,7 @@ ALTER TABLE ONLY token ALTER COLUMN "ID" SET DEFAULT nextval('"token_ID_seq"'::r
 
 
 --
--- TOC entry 2515 (class 2604 OID 32890)
+-- TOC entry 2505 (class 2604 OID 16581)
 -- Name: token_payload ID; Type: DEFAULT; Schema: jwt; Owner: easyspid
 --
 
@@ -1440,7 +1441,7 @@ ALTER TABLE ONLY token_payload ALTER COLUMN "ID" SET DEFAULT nextval('"token_pay
 
 
 --
--- TOC entry 2502 (class 2604 OID 24608)
+-- TOC entry 2509 (class 2604 OID 16582)
 -- Name: token_schemas ID; Type: DEFAULT; Schema: jwt; Owner: easyspid
 --
 
@@ -1448,7 +1449,7 @@ ALTER TABLE ONLY token_schemas ALTER COLUMN "ID" SET DEFAULT nextval('"token_sch
 
 
 --
--- TOC entry 2509 (class 2604 OID 32808)
+-- TOC entry 2516 (class 2604 OID 16583)
 -- Name: token_signature ID; Type: DEFAULT; Schema: jwt; Owner: easyspid
 --
 
@@ -1456,7 +1457,7 @@ ALTER TABLE ONLY token_signature ALTER COLUMN "ID" SET DEFAULT nextval('"token_s
 
 
 --
--- TOC entry 2507 (class 2604 OID 32794)
+-- TOC entry 2518 (class 2604 OID 16584)
 -- Name: token_type ID; Type: DEFAULT; Schema: jwt; Owner: easyspid
 --
 
@@ -1466,7 +1467,7 @@ ALTER TABLE ONLY token_type ALTER COLUMN "ID" SET DEFAULT nextval('"token_type_I
 SET search_path = log, pg_catalog;
 
 --
--- TOC entry 2552 (class 2604 OID 77212)
+-- TOC entry 2553 (class 2604 OID 18417)
 -- Name: requests ID; Type: DEFAULT; Schema: log; Owner: easyspid
 --
 
@@ -1474,7 +1475,7 @@ ALTER TABLE ONLY requests ALTER COLUMN "ID" SET DEFAULT nextval('"request_ID_seq
 
 
 --
--- TOC entry 2555 (class 2604 OID 77261)
+-- TOC entry 2556 (class 2604 OID 18418)
 -- Name: responses ID; Type: DEFAULT; Schema: log; Owner: easyspid
 --
 
@@ -1484,7 +1485,7 @@ ALTER TABLE ONLY responses ALTER COLUMN "ID" SET DEFAULT nextval('"respones_ID_s
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 2531 (class 2604 OID 33879)
+-- TOC entry 2521 (class 2604 OID 16585)
 -- Name: assertions ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1492,7 +1493,7 @@ ALTER TABLE ONLY assertions ALTER COLUMN "ID" SET DEFAULT nextval('"assertions_I
 
 
 --
--- TOC entry 2534 (class 2604 OID 33971)
+-- TOC entry 2523 (class 2604 OID 16586)
 -- Name: assertions_type ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1500,7 +1501,7 @@ ALTER TABLE ONLY assertions_type ALTER COLUMN "ID" SET DEFAULT nextval('"asserti
 
 
 --
--- TOC entry 2550 (class 2604 OID 42295)
+-- TOC entry 2530 (class 2604 OID 16587)
 -- Name: jwt_settings ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1508,7 +1509,7 @@ ALTER TABLE ONLY jwt_settings ALTER COLUMN "ID" SET DEFAULT nextval('"jwt_settin
 
 
 --
--- TOC entry 2540 (class 2604 OID 34631)
+-- TOC entry 2534 (class 2604 OID 16588)
 -- Name: metadata ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1516,7 +1517,7 @@ ALTER TABLE ONLY metadata ALTER COLUMN "ID" SET DEFAULT nextval('"metadata_ID_se
 
 
 --
--- TOC entry 2519 (class 2604 OID 33839)
+-- TOC entry 2540 (class 2604 OID 16589)
 -- Name: providers ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1524,7 +1525,7 @@ ALTER TABLE ONLY providers ALTER COLUMN "ID" SET DEFAULT nextval('"providers_ID_
 
 
 --
--- TOC entry 2536 (class 2604 OID 33995)
+-- TOC entry 2545 (class 2604 OID 16590)
 -- Name: services ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1532,7 +1533,7 @@ ALTER TABLE ONLY services ALTER COLUMN "ID" SET DEFAULT nextval('"services_ID_se
 
 
 --
--- TOC entry 2545 (class 2604 OID 42088)
+-- TOC entry 2549 (class 2604 OID 16591)
 -- Name: settings ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1540,7 +1541,7 @@ ALTER TABLE ONLY settings ALTER COLUMN "ID" SET DEFAULT nextval('"settings_ID_se
 
 
 --
--- TOC entry 2526 (class 2604 OID 33858)
+-- TOC entry 2527 (class 2604 OID 16592)
 -- Name: signatures ID; Type: DEFAULT; Schema: saml; Owner: easyspid
 --
 
@@ -1550,7 +1551,7 @@ ALTER TABLE ONLY signatures ALTER COLUMN "ID" SET DEFAULT nextval('"certifcates_
 SET search_path = jwt, pg_catalog;
 
 --
--- TOC entry 2560 (class 2606 OID 24589)
+-- TOC entry 2559 (class 2606 OID 16614)
 -- Name: token token_cod_key; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1559,7 +1560,7 @@ ALTER TABLE ONLY token
 
 
 --
--- TOC entry 2582 (class 2606 OID 32900)
+-- TOC entry 2566 (class 2606 OID 16616)
 -- Name: token_payload token_payload_cod_payload_key; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1568,7 +1569,7 @@ ALTER TABLE ONLY token_payload
 
 
 --
--- TOC entry 2584 (class 2606 OID 32898)
+-- TOC entry 2568 (class 2606 OID 16618)
 -- Name: token_payload token_payload_pkey; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1577,7 +1578,7 @@ ALTER TABLE ONLY token_payload
 
 
 --
--- TOC entry 2564 (class 2606 OID 24587)
+-- TOC entry 2563 (class 2606 OID 16620)
 -- Name: token token_pkey; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1586,7 +1587,7 @@ ALTER TABLE ONLY token
 
 
 --
--- TOC entry 2568 (class 2606 OID 24618)
+-- TOC entry 2571 (class 2606 OID 16622)
 -- Name: token_schemas token_schemas_cod_schema_key; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1595,7 +1596,7 @@ ALTER TABLE ONLY token_schemas
 
 
 --
--- TOC entry 2570 (class 2606 OID 24616)
+-- TOC entry 2573 (class 2606 OID 16624)
 -- Name: token_schemas token_schemas_pkey; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1604,7 +1605,7 @@ ALTER TABLE ONLY token_schemas
 
 
 --
--- TOC entry 2578 (class 2606 OID 32819)
+-- TOC entry 2577 (class 2606 OID 16626)
 -- Name: token_signature token_signature_cod_signature_key; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1613,7 +1614,7 @@ ALTER TABLE ONLY token_signature
 
 
 --
--- TOC entry 2580 (class 2606 OID 32817)
+-- TOC entry 2579 (class 2606 OID 16628)
 -- Name: token_signature token_signature_pkey; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1622,7 +1623,7 @@ ALTER TABLE ONLY token_signature
 
 
 --
--- TOC entry 2574 (class 2606 OID 32799)
+-- TOC entry 2581 (class 2606 OID 16630)
 -- Name: token_type token_type_pk; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1631,7 +1632,7 @@ ALTER TABLE ONLY token_type
 
 
 --
--- TOC entry 2576 (class 2606 OID 32801)
+-- TOC entry 2583 (class 2606 OID 16632)
 -- Name: token_type token_type_un; Type: CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -1642,7 +1643,7 @@ ALTER TABLE ONLY token_type
 SET search_path = log, pg_catalog;
 
 --
--- TOC entry 2634 (class 2606 OID 77221)
+-- TOC entry 2631 (class 2606 OID 18423)
 -- Name: requests request_cod_request_key; Type: CONSTRAINT; Schema: log; Owner: easyspid
 --
 
@@ -1651,7 +1652,7 @@ ALTER TABLE ONLY requests
 
 
 --
--- TOC entry 2636 (class 2606 OID 77219)
+-- TOC entry 2633 (class 2606 OID 18425)
 -- Name: requests request_pkey; Type: CONSTRAINT; Schema: log; Owner: easyspid
 --
 
@@ -1660,7 +1661,7 @@ ALTER TABLE ONLY requests
 
 
 --
--- TOC entry 2638 (class 2606 OID 77270)
+-- TOC entry 2635 (class 2606 OID 18427)
 -- Name: responses response_cod_response_key; Type: CONSTRAINT; Schema: log; Owner: easyspid
 --
 
@@ -1669,7 +1670,7 @@ ALTER TABLE ONLY responses
 
 
 --
--- TOC entry 2640 (class 2606 OID 77268)
+-- TOC entry 2637 (class 2606 OID 18429)
 -- Name: responses response_pkey; Type: CONSTRAINT; Schema: log; Owner: easyspid
 --
 
@@ -1680,7 +1681,7 @@ ALTER TABLE ONLY responses
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 2599 (class 2606 OID 33888)
+-- TOC entry 2586 (class 2606 OID 16636)
 -- Name: assertions assertions_cod_assertion_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1689,7 +1690,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2601 (class 2606 OID 33886)
+-- TOC entry 2588 (class 2606 OID 16638)
 -- Name: assertions assertions_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1698,7 +1699,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2603 (class 2606 OID 33976)
+-- TOC entry 2590 (class 2606 OID 16640)
 -- Name: assertions_type assertions_type_cod_type_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1707,7 +1708,7 @@ ALTER TABLE ONLY assertions_type
 
 
 --
--- TOC entry 2605 (class 2606 OID 33974)
+-- TOC entry 2592 (class 2606 OID 16642)
 -- Name: assertions_type assertions_type_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1716,7 +1717,7 @@ ALTER TABLE ONLY assertions_type
 
 
 --
--- TOC entry 2593 (class 2606 OID 33866)
+-- TOC entry 2594 (class 2606 OID 16644)
 -- Name: signatures certifcates_cod_cert_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1725,7 +1726,7 @@ ALTER TABLE ONLY signatures
 
 
 --
--- TOC entry 2595 (class 2606 OID 33864)
+-- TOC entry 2596 (class 2606 OID 16646)
 -- Name: signatures certifcates_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1734,7 +1735,7 @@ ALTER TABLE ONLY signatures
 
 
 --
--- TOC entry 2630 (class 2606 OID 42300)
+-- TOC entry 2599 (class 2606 OID 16648)
 -- Name: jwt_settings jwt_settings_cod_jwt_setting_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1743,7 +1744,7 @@ ALTER TABLE ONLY jwt_settings
 
 
 --
--- TOC entry 2632 (class 2606 OID 42297)
+-- TOC entry 2601 (class 2606 OID 16650)
 -- Name: jwt_settings jwt_settings_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1752,7 +1753,7 @@ ALTER TABLE ONLY jwt_settings
 
 
 --
--- TOC entry 2614 (class 2606 OID 34644)
+-- TOC entry 2603 (class 2606 OID 16652)
 -- Name: metadata metadata_active_cod_provider_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1761,7 +1762,7 @@ ALTER TABLE ONLY metadata
 
 
 --
--- TOC entry 2617 (class 2606 OID 34642)
+-- TOC entry 2606 (class 2606 OID 16654)
 -- Name: metadata metadata_cod_metadata_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1770,7 +1771,7 @@ ALTER TABLE ONLY metadata
 
 
 --
--- TOC entry 2620 (class 2606 OID 34640)
+-- TOC entry 2609 (class 2606 OID 16656)
 -- Name: metadata metadata_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1779,7 +1780,7 @@ ALTER TABLE ONLY metadata
 
 
 --
--- TOC entry 2587 (class 2606 OID 33850)
+-- TOC entry 2612 (class 2606 OID 16658)
 -- Name: providers providers_cod_provider_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1788,7 +1789,7 @@ ALTER TABLE ONLY providers
 
 
 --
--- TOC entry 2590 (class 2606 OID 33848)
+-- TOC entry 2615 (class 2606 OID 16660)
 -- Name: providers providers_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1797,7 +1798,7 @@ ALTER TABLE ONLY providers
 
 
 --
--- TOC entry 2607 (class 2606 OID 34005)
+-- TOC entry 2618 (class 2606 OID 16662)
 -- Name: services services_cod_service_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1806,7 +1807,7 @@ ALTER TABLE ONLY services
 
 
 --
--- TOC entry 2610 (class 2606 OID 34003)
+-- TOC entry 2621 (class 2606 OID 16664)
 -- Name: services services_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1815,7 +1816,7 @@ ALTER TABLE ONLY services
 
 
 --
--- TOC entry 2612 (class 2606 OID 93722)
+-- TOC entry 2623 (class 2606 OID 19504)
 -- Name: services services_relay_state_cod_provider_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1824,16 +1825,7 @@ ALTER TABLE ONLY services
 
 
 --
--- TOC entry 2622 (class 2606 OID 42099)
--- Name: settings setting_active_cod_provider_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
---
-
-ALTER TABLE ONLY settings
-    ADD CONSTRAINT setting_active_cod_provider_key UNIQUE (active, cod_provider);
-
-
---
--- TOC entry 2626 (class 2606 OID 42101)
+-- TOC entry 2627 (class 2606 OID 16668)
 -- Name: settings setting_cod_setting_key; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1842,7 +1834,7 @@ ALTER TABLE ONLY settings
 
 
 --
--- TOC entry 2628 (class 2606 OID 42097)
+-- TOC entry 2629 (class 2606 OID 16670)
 -- Name: settings setting_pkey; Type: CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -1853,7 +1845,7 @@ ALTER TABLE ONLY settings
 SET search_path = jwt, pg_catalog;
 
 --
--- TOC entry 2558 (class 1259 OID 32830)
+-- TOC entry 2557 (class 1259 OID 16671)
 -- Name: fki_token_token_type_fk; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1861,7 +1853,7 @@ CREATE INDEX fki_token_token_type_fk ON token USING btree (cod_type);
 
 
 --
--- TOC entry 2561 (class 1259 OID 24591)
+-- TOC entry 2560 (class 1259 OID 16672)
 -- Name: token_header_idx; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1869,7 +1861,7 @@ CREATE INDEX token_header_idx ON token USING btree (header);
 
 
 --
--- TOC entry 2562 (class 1259 OID 24592)
+-- TOC entry 2561 (class 1259 OID 16673)
 -- Name: token_payload_idx; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1877,7 +1869,7 @@ CREATE INDEX token_payload_idx ON token USING btree (payload);
 
 
 --
--- TOC entry 2566 (class 1259 OID 24621)
+-- TOC entry 2569 (class 1259 OID 16674)
 -- Name: token_schemas_active_idx; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1885,7 +1877,7 @@ CREATE INDEX token_schemas_active_idx ON token_schemas USING btree (active);
 
 
 --
--- TOC entry 2571 (class 1259 OID 24620)
+-- TOC entry 2574 (class 1259 OID 16675)
 -- Name: token_schemas_schema_idx; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1893,7 +1885,7 @@ CREATE INDEX token_schemas_schema_idx ON token_schemas USING btree (schema);
 
 
 --
--- TOC entry 2572 (class 1259 OID 24619)
+-- TOC entry 2575 (class 1259 OID 16676)
 -- Name: token_schemas_type_idx; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1901,7 +1893,7 @@ CREATE INDEX token_schemas_type_idx ON token_schemas USING btree (cod_type);
 
 
 --
--- TOC entry 2565 (class 1259 OID 24590)
+-- TOC entry 2564 (class 1259 OID 16677)
 -- Name: token_token_idx; Type: INDEX; Schema: jwt; Owner: easyspid
 --
 
@@ -1911,7 +1903,7 @@ CREATE INDEX token_token_idx ON token USING btree (token);
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 2597 (class 1259 OID 42352)
+-- TOC entry 2584 (class 1259 OID 16678)
 -- Name: assertions_ID_response_assertion_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1919,7 +1911,7 @@ CREATE INDEX "assertions_ID_response_assertion_idx" ON assertions USING btree ("
 
 
 --
--- TOC entry 2615 (class 1259 OID 34650)
+-- TOC entry 2604 (class 1259 OID 16679)
 -- Name: metadata_cod_metadata_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1927,7 +1919,7 @@ CREATE INDEX metadata_cod_metadata_idx ON metadata USING btree (cod_metadata bpc
 
 
 --
--- TOC entry 2618 (class 1259 OID 34651)
+-- TOC entry 2607 (class 1259 OID 16680)
 -- Name: metadata_cod_provider_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1935,7 +1927,7 @@ CREATE INDEX metadata_cod_provider_idx ON metadata USING btree (cod_provider);
 
 
 --
--- TOC entry 2585 (class 1259 OID 33852)
+-- TOC entry 2610 (class 1259 OID 16681)
 -- Name: providers_active_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1943,7 +1935,7 @@ CREATE INDEX providers_active_idx ON providers USING btree (active);
 
 
 --
--- TOC entry 2588 (class 1259 OID 33956)
+-- TOC entry 2613 (class 1259 OID 16682)
 -- Name: providers_name_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1951,7 +1943,7 @@ CREATE INDEX providers_name_idx ON providers USING btree (name);
 
 
 --
--- TOC entry 2591 (class 1259 OID 33851)
+-- TOC entry 2616 (class 1259 OID 16683)
 -- Name: providers_type_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1959,7 +1951,7 @@ CREATE INDEX providers_type_idx ON providers USING btree (type);
 
 
 --
--- TOC entry 2608 (class 1259 OID 34011)
+-- TOC entry 2619 (class 1259 OID 19505)
 -- Name: services_name_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1967,7 +1959,7 @@ CREATE INDEX services_name_idx ON services USING btree (relay_state);
 
 
 --
--- TOC entry 2623 (class 1259 OID 42108)
+-- TOC entry 2624 (class 1259 OID 16685)
 -- Name: setting_cod_provider_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1975,7 +1967,7 @@ CREATE INDEX setting_cod_provider_idx ON settings USING btree (cod_provider DESC
 
 
 --
--- TOC entry 2624 (class 1259 OID 42107)
+-- TOC entry 2625 (class 1259 OID 16686)
 -- Name: setting_cod_setting_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1983,7 +1975,7 @@ CREATE INDEX setting_cod_setting_idx ON settings USING btree (cod_setting DESC);
 
 
 --
--- TOC entry 2596 (class 1259 OID 42043)
+-- TOC entry 2597 (class 1259 OID 16687)
 -- Name: signatures_fingerprint_idx; Type: INDEX; Schema: saml; Owner: easyspid
 --
 
@@ -1993,7 +1985,7 @@ CREATE INDEX signatures_fingerprint_idx ON signatures USING btree (fingerprint);
 SET search_path = jwt, pg_catalog;
 
 --
--- TOC entry 2657 (class 2620 OID 32938)
+-- TOC entry 2654 (class 2620 OID 16688)
 -- Name: token 01_chk_token_header_insert; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2001,7 +1993,7 @@ CREATE TRIGGER "01_chk_token_header_insert" BEFORE INSERT ON token FOR EACH ROW 
 
 
 --
--- TOC entry 2663 (class 2620 OID 32942)
+-- TOC entry 2662 (class 2620 OID 16689)
 -- Name: token_signature 01_chk_token_header_insert; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2009,7 +2001,7 @@ CREATE TRIGGER "01_chk_token_header_insert" BEFORE INSERT ON token_signature FOR
 
 
 --
--- TOC entry 2658 (class 2620 OID 32939)
+-- TOC entry 2655 (class 2620 OID 16690)
 -- Name: token 01_chk_token_header_update; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2017,7 +2009,7 @@ CREATE TRIGGER "01_chk_token_header_update" BEFORE UPDATE ON token FOR EACH ROW 
 
 
 --
--- TOC entry 2664 (class 2620 OID 32943)
+-- TOC entry 2663 (class 2620 OID 16691)
 -- Name: token_signature 01_chk_token_header_update; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2025,7 +2017,7 @@ CREATE TRIGGER "01_chk_token_header_update" BEFORE UPDATE ON token_signature FOR
 
 
 --
--- TOC entry 2662 (class 2620 OID 33824)
+-- TOC entry 2661 (class 2620 OID 16692)
 -- Name: token_schemas 01_token_schemas_update; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2033,7 +2025,7 @@ CREATE TRIGGER "01_token_schemas_update" BEFORE UPDATE ON token_schemas FOR EACH
 
 
 --
--- TOC entry 2659 (class 2620 OID 32940)
+-- TOC entry 2656 (class 2620 OID 16693)
 -- Name: token 02_chk_token_payload_insert; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2041,7 +2033,7 @@ CREATE TRIGGER "02_chk_token_payload_insert" BEFORE INSERT ON token FOR EACH ROW
 
 
 --
--- TOC entry 2665 (class 2620 OID 32944)
+-- TOC entry 2659 (class 2620 OID 16694)
 -- Name: token_payload 02_chk_token_payload_insert; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2049,7 +2041,7 @@ CREATE TRIGGER "02_chk_token_payload_insert" BEFORE INSERT ON token_payload FOR 
 
 
 --
--- TOC entry 2660 (class 2620 OID 32941)
+-- TOC entry 2657 (class 2620 OID 16695)
 -- Name: token 02_chk_token_payload_update; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2057,7 +2049,7 @@ CREATE TRIGGER "02_chk_token_payload_update" BEFORE UPDATE ON token FOR EACH ROW
 
 
 --
--- TOC entry 2666 (class 2620 OID 32945)
+-- TOC entry 2660 (class 2620 OID 16696)
 -- Name: token_payload 02_chk_token_payload_update; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2065,7 +2057,7 @@ CREATE TRIGGER "02_chk_token_payload_update" BEFORE UPDATE ON token_payload FOR 
 
 
 --
--- TOC entry 2661 (class 2620 OID 77229)
+-- TOC entry 2658 (class 2620 OID 18432)
 -- Name: token 03_date_update; Type: TRIGGER; Schema: jwt; Owner: easyspid
 --
 
@@ -2075,7 +2067,7 @@ CREATE TRIGGER "03_date_update" BEFORE UPDATE ON token FOR EACH ROW EXECUTE PROC
 SET search_path = log, pg_catalog;
 
 --
--- TOC entry 2675 (class 2620 OID 77228)
+-- TOC entry 2672 (class 2620 OID 18430)
 -- Name: requests 01_date_update; Type: TRIGGER; Schema: log; Owner: easyspid
 --
 
@@ -2083,7 +2075,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON requests FOR EACH ROW EXECUTE P
 
 
 --
--- TOC entry 2676 (class 2620 OID 77271)
+-- TOC entry 2673 (class 2620 OID 18431)
 -- Name: responses 01_date_update; Type: TRIGGER; Schema: log; Owner: easyspid
 --
 
@@ -2093,7 +2085,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON responses FOR EACH ROW EXECUTE 
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 2671 (class 2620 OID 77223)
+-- TOC entry 2665 (class 2620 OID 18433)
 -- Name: assertions 01_date_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2101,7 +2093,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON assertions FOR EACH ROW EXECUTE
 
 
 --
--- TOC entry 2672 (class 2620 OID 77224)
+-- TOC entry 2668 (class 2620 OID 18434)
 -- Name: metadata 01_date_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2109,7 +2101,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON metadata FOR EACH ROW EXECUTE P
 
 
 --
--- TOC entry 2667 (class 2620 OID 77225)
+-- TOC entry 2670 (class 2620 OID 18435)
 -- Name: providers 01_date_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2117,7 +2109,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON providers FOR EACH ROW EXECUTE 
 
 
 --
--- TOC entry 2674 (class 2620 OID 77226)
+-- TOC entry 2671 (class 2620 OID 18436)
 -- Name: settings 01_date_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2125,7 +2117,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON settings FOR EACH ROW EXECUTE P
 
 
 --
--- TOC entry 2669 (class 2620 OID 77227)
+-- TOC entry 2667 (class 2620 OID 18437)
 -- Name: signatures 01_date_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2133,7 +2125,7 @@ CREATE TRIGGER "01_date_update" BEFORE UPDATE ON signatures FOR EACH ROW EXECUTE
 
 
 --
--- TOC entry 2670 (class 2620 OID 42136)
+-- TOC entry 2664 (class 2620 OID 16702)
 -- Name: assertions 02_ID_assertion_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2141,7 +2133,7 @@ CREATE TRIGGER "02_ID_assertion_update" BEFORE INSERT OR UPDATE ON assertions FO
 
 
 --
--- TOC entry 2668 (class 2620 OID 42036)
+-- TOC entry 2666 (class 2620 OID 16703)
 -- Name: signatures 02_fingerprint_update; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2149,7 +2141,7 @@ CREATE TRIGGER "02_fingerprint_update" BEFORE INSERT OR UPDATE ON signatures FOR
 
 
 --
--- TOC entry 2673 (class 2620 OID 93615)
+-- TOC entry 2669 (class 2620 OID 19151)
 -- Name: metadata 02_put_cert; Type: TRIGGER; Schema: saml; Owner: easyspid
 --
 
@@ -2159,7 +2151,7 @@ CREATE TRIGGER "02_put_cert" BEFORE INSERT OR UPDATE ON metadata FOR EACH ROW EX
 SET search_path = jwt, pg_catalog;
 
 --
--- TOC entry 2644 (class 2606 OID 32901)
+-- TOC entry 2639 (class 2606 OID 16704)
 -- Name: token_payload token_payload_cod_type_fkey; Type: FK CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -2168,7 +2160,7 @@ ALTER TABLE ONLY token_payload
 
 
 --
--- TOC entry 2642 (class 2606 OID 32831)
+-- TOC entry 2640 (class 2606 OID 16709)
 -- Name: token_schemas token_schemas_token_type_fk; Type: FK CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -2177,7 +2169,7 @@ ALTER TABLE ONLY token_schemas
 
 
 --
--- TOC entry 2643 (class 2606 OID 32820)
+-- TOC entry 2641 (class 2606 OID 16714)
 -- Name: token_signature token_signature_cod_type_fkey; Type: FK CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -2186,7 +2178,7 @@ ALTER TABLE ONLY token_signature
 
 
 --
--- TOC entry 2641 (class 2606 OID 32825)
+-- TOC entry 2638 (class 2606 OID 16719)
 -- Name: token token_token_type_fk; Type: FK CONSTRAINT; Schema: jwt; Owner: easyspid
 --
 
@@ -2197,7 +2189,7 @@ ALTER TABLE ONLY token
 SET search_path = saml, pg_catalog;
 
 --
--- TOC entry 2650 (class 2606 OID 42273)
+-- TOC entry 2642 (class 2606 OID 16724)
 -- Name: assertions assertions_cod_idp_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2206,7 +2198,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2649 (class 2606 OID 42268)
+-- TOC entry 2643 (class 2606 OID 16729)
 -- Name: assertions assertions_cod_sp_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2215,7 +2207,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2646 (class 2606 OID 33889)
+-- TOC entry 2644 (class 2606 OID 16734)
 -- Name: assertions assertions_cod_token_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2224,7 +2216,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2647 (class 2606 OID 33977)
+-- TOC entry 2645 (class 2606 OID 16739)
 -- Name: assertions assertions_cod_type_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2233,7 +2225,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2648 (class 2606 OID 42263)
+-- TOC entry 2646 (class 2606 OID 16744)
 -- Name: assertions assertions_providers_fk; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2242,7 +2234,7 @@ ALTER TABLE ONLY assertions
 
 
 --
--- TOC entry 2645 (class 2606 OID 33867)
+-- TOC entry 2647 (class 2606 OID 16749)
 -- Name: signatures certifcates_cod_provider_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2251,7 +2243,7 @@ ALTER TABLE ONLY signatures
 
 
 --
--- TOC entry 2655 (class 2606 OID 42306)
+-- TOC entry 2648 (class 2606 OID 16754)
 -- Name: jwt_settings jwt_settings_cod_provider_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2260,7 +2252,7 @@ ALTER TABLE ONLY jwt_settings
 
 
 --
--- TOC entry 2654 (class 2606 OID 42311)
+-- TOC entry 2649 (class 2606 OID 16759)
 -- Name: jwt_settings jwt_settings_cod_type_assertion_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2269,7 +2261,7 @@ ALTER TABLE ONLY jwt_settings
 
 
 --
--- TOC entry 2656 (class 2606 OID 42301)
+-- TOC entry 2650 (class 2606 OID 16764)
 -- Name: jwt_settings jwt_settings_cod_type_token_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2278,7 +2270,7 @@ ALTER TABLE ONLY jwt_settings
 
 
 --
--- TOC entry 2652 (class 2606 OID 34645)
+-- TOC entry 2651 (class 2606 OID 16769)
 -- Name: metadata metadata_cod_provider_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2287,7 +2279,7 @@ ALTER TABLE ONLY metadata
 
 
 --
--- TOC entry 2651 (class 2606 OID 34006)
+-- TOC entry 2652 (class 2606 OID 16774)
 -- Name: services services_cod_provider_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2296,7 +2288,7 @@ ALTER TABLE ONLY services
 
 
 --
--- TOC entry 2653 (class 2606 OID 42102)
+-- TOC entry 2653 (class 2606 OID 16779)
 -- Name: settings setting_cod_provider_fkey; Type: FK CONSTRAINT; Schema: saml; Owner: easyspid
 --
 
@@ -2304,7 +2296,7 @@ ALTER TABLE ONLY settings
     ADD CONSTRAINT setting_cod_provider_fkey FOREIGN KEY (cod_provider) REFERENCES providers(cod_provider) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 
--- Completed on 2017-08-01 00:17:11 CEST
+-- Completed on 2017-11-23 17:39:27 CET
 
 --
 -- PostgreSQL database dump complete

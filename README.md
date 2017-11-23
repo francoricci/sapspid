@@ -23,12 +23,13 @@ L’SP concede accesso ai propri servizi a seguito dell’invio da parte di ES d
 Affinché SP possa essere sicuro del mittente e che il messaggio ricevuto derivi da una reale richiesta iniziata nella fase 1, è sufficiente l’utilizzo di un opportuno “token” generato da sapspid nella fase 3 (quando sapspid riceve la SAML response dell’IdP) e inviato da sapspid a SP nella fase 4. 
 Un terzo che, cercasse di inviare un messaggio “fake” a SP non potrebbe generare un token valido permettendo a SP di rigettare la richiesta di accesso. 
 ## REQUISITI
-Sapspid è scritto in Python ed utilizza un Database Postgresql per meomoriazzare le asserzioni SAML ed i parametridi configurazione del SP.
+Sapspid è scritto in Python ed utilizza un Database Postgresql per meomoriazzare le asserzioni SAML ed i parametri di configurazione del SP.
 In particolare:
 * Python 3.6
 * tornado 4.5.1
 * xmlsec 1.1.0
-* psycopg2 2.7.1
+* psycopg2 2.7.1 (deprecato)
+* asyncpg 0.11
 * ujson 1.35 o in alternativa simplejson 3.11.1
 * PyJWT 1.5.2
 * jsonschema 2.6.0
@@ -39,6 +40,8 @@ In particolare:
 * PostgreSQL 
 * PL/Python
 * POstgreSQL uuid-ossp extension
+* uvloop (opzionale)
+
 
 Attualemnte sapspud è installato su un sistema FreeBSD 11 a 64bit.
 
