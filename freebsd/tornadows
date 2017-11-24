@@ -40,7 +40,7 @@ status_cmd="${name}_status"
 tornadows_start()
 {
   chdir ${tornadows_home}
-  /usr/sbin/daemon -f -u ${tornadows_user} ${command} ${rc_flags} ${tornadows_home}/server.py -c ${tornadows_config}
+  /usr/sbin/daemon -u ${tornadows_user} ${command} ${rc_flags} ${tornadows_home}/server.py -c ${tornadows_config}
   echo "${name} started"
 }
 
