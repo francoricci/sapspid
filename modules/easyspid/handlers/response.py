@@ -10,7 +10,7 @@ import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
-from easyspid.lib.utils import Saml2_Settings
+from easyspid.lib.utils import Saml2_Settings, waitFuture
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from onelogin.saml2.response import OneLogin_Saml2_Response
@@ -81,11 +81,12 @@ class responseHandler(easyspidHandler):
 
             task1 = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("chk_idAssertion('%s')" %
                     inResponseTo), globalsObj.ioloop)
-            task2 = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_provider_byentityid(%s, %s)" %
+            task2 = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_provider_byentityid(%s, '%s')" %
                     ('True', '{'+(issuer.text.strip())+'}')),  globalsObj.ioloop)
 
-            assert not task1.done()
-            inResponseChk = task1.result()
+            #assert not task1.done()
+            #inResponseChk = task1.result()
+            inResponseChk = waitFuture(task1)
 
             if inResponseChk['error'] == 0 and inResponseChk['result'] is not None:
                 sp = inResponseChk['result'][0]['cod_sp']
@@ -98,8 +99,9 @@ class responseHandler(easyspidHandler):
             try:
                 task = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_service(%s, '%s', '%s')" %
                     ('True', srelay, sp)),globalsObj.ioloop)
-                assert not task.done()
-                service = task.result()
+                #assert not task.done()
+                #service = task.result()
+                service = waitFuture(task)
 
                 if service['error'] == 0 and service['result'] is not None:
                     # costruisci il routing
@@ -115,8 +117,9 @@ class responseHandler(easyspidHandler):
             except Exception:
                 pass
 
-            assert not task2.done()
-            idpEntityId = task2.result()
+            #assert not task2.done()
+            #idpEntityId = task2.result()
+            idpEntityId = waitFuture(task2)
 
             if idpEntityId['error'] == 0 and idpEntityId['result'] is not None:
                 idp_metadata = idpEntityId['result'][0]['xml']
@@ -134,22 +137,25 @@ class responseHandler(easyspidHandler):
 
             # get settings
             task = asyncio.run_coroutine_threadsafe(easyspid.lib.easyspid.spSettings(sp, idp, close = True), globalsObj.ioloop)
-            assert not task.done()
-            sp_settings = task.result()
+            #assert not task.done()
+            #sp_settings = task.result()
+            sp_settings = waitFuture(task)
 
             if sp_settings['error'] == 0 and sp_settings['result'] != None:
 
                 ## insert response into DB
                 task = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("write_assertion('%s', '%s', '%s', '%s')" %
                         (str(response,'utf-8'), sp, idp, self.remote_ip)), globalsObj.ioloop)
-                assert not task.done()
-                wrtAuthn = task.result()
+                #assert not task.done()
+                #wrtAuthn = task.result()
+                wrtAuthn = waitFuture(task)
 
                 if wrtAuthn['error'] == 0:
                     task = asyncio.run_coroutine_threadsafe(self.dbobjJwt.execute_statment("get_token_by_cod('%s')" %
                             (wrtAuthn['result'][0]['cod_token'])), globalsObj.ioloop)
-                    assert not task.done()
-                    jwt = task.result()
+                    #assert not task.done()
+                    #jwt = task.result()
+                    jwt = waitFuture(task)
 
                 else:
                     response_obj = ResponseObj(httpcode=500, debugMessage=wrtAuthn['result'])
@@ -166,6 +172,8 @@ class responseHandler(easyspidHandler):
                                 sp_settings['result']['idp']['x509cert_fingerprint'],
                                 sp_settings['result']['idp']['x509cert_fingerprintalg'])
 
+                chk['issuer'] = issuer.text.strip()
+
                 if not chk['schemaValidate']:
                     response_obj = ResponseObj(httpcode=401)
                     response_obj.setError('easyspid104')
@@ -179,7 +187,7 @@ class responseHandler(easyspidHandler):
                     return response_obj
 
                 elif chk['schemaValidate'] and chk['signCheck']:
-                    response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result']['ID_assertion'])
+                    response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result'][0]['ID_assertion'])
                     response_obj.setError('200')
 
                 OneLoginResponse = OneLogin_Saml2_Response(prvdSettings, responsePost)
@@ -229,9 +237,9 @@ class responseHandler(easyspidHandler):
                 response_form = response_form.replace("%JSONRESPONSE%",OneLogin_Saml2_Utils.b64encode(response))
                 response_form = response_form.replace("%RELAYSTATE%",srelayPost)
 
-                response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result']['ID_assertion'])
+                response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result'][0]['ID_assertion'])
                 response_obj.setError('200')
-                response_obj.setResult(attributes = attributes, jwt = jwt['result']['token'], responseValidate = chk,
+                response_obj.setResult(attributes = attributes, jwt = jwt['result'][0]['token'], responseValidate = chk,
                         response = str(response, 'utf-8'), responseBase64 = responsePost, postTo = response_form)
 
             elif sp_settings['error'] == 0 and sp_settings['result'] == None:

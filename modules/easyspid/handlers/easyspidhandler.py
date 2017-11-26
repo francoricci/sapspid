@@ -57,13 +57,13 @@ class easyspidHandler(RequestHandler):
         else:
             body = "'"+str(self.request.body, 'utf-8').replace("'", "''")+"'"
 
-        log_request = await self.dbobjJwt.execute_statment("log_request('%s', '%s', %s, '%s')" %
+        log_request = await self.dbobjSaml.execute_statment("log_request('%s', '%s', %s, '%s')" %
                         (self.request.method,
                         self.request.protocol + "://" + self.request.host + self.request.uri,
                         body,
                         remote_ip))
 
-        log_response = await self.dbobjJwt.execute_statment("log_response('%s', '%s', %s, '%s')" %
+        log_response = await self.dbobjSaml.execute_statment("log_response('%s', '%s', %s, '%s')" %
                         (response_obj.error.httpcode,
                         self.request.protocol + "://" + self.request.host + self.request.uri,
                         "'"+response_obj.jsonWrite().replace("'", "''")+"'",

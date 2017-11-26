@@ -11,7 +11,7 @@ import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
-from easyspid.lib.utils import Saml2_Settings
+from easyspid.lib.utils import Saml2_Settings, waitFuture
 
 class validateAssertiondHandler(easyspidHandler):
 
@@ -51,8 +51,9 @@ class validateAssertiondHandler(easyspidHandler):
 
             if prvd != "":
                 task  = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_signature('%s')" % prvd))
-                assert not task.done()
-                prvdSignature = task.result()
+                #assert not task.done()
+                #prvdSignature = task.result()
+                prvdSignature = easyspid.lib.utils.waitFuture(task)
 
                 if prvdSignature['error'] == 0 and prvdSignature['result'] is not None:
                     certFingerprint = prvdSignature['result'][0]['fingerprint']

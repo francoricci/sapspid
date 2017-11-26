@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2.0",
+    "version": "2.1",
     "title": "SP Spid",
     "description": "SPID gateway. API to easily work with SPID",
     "license": {
@@ -342,13 +342,6 @@
             "schema": {
               "$ref": "#/definitions/VerifyMetadatarequest"
             }
-          },
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "required": true,
-            "type": "string",
-            "description": "application/json"
           }
         ],
         "responses": {
@@ -678,13 +671,6 @@
             "schema": {
               "$ref": "#/definitions/VerifyAuthnRequestrequest"
             }
-          },
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "required": true,
-            "type": "string",
-            "description": ""
           }
         ],
         "responses": {

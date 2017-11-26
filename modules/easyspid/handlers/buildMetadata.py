@@ -10,7 +10,7 @@ import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
-from easyspid.lib.utils import Saml2_Settings
+from easyspid.lib.utils import Saml2_Settings, waitFuture
 
 class buildMetadatahandler(easyspidHandler):
 
@@ -66,15 +66,17 @@ class buildMetadatahandler(easyspidHandler):
                 if dbSave:
                     task = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("write_assertion('%s', '%s', %s, '%s')" %
                         (metadata.replace("'", "''"), sp, 'NULL', self.remote_ip)), globalsObj.ioloop)
-                    assert not task.done()
-                    wrtMetada = task.result()
+                    #assert not task.done()
+                    #wrtMetada = task.result()
+                    wrtMetada = waitFuture(task)
 
                     if wrtMetada['error'] == 0:
 
                         task = asyncio.run_coroutine_threadsafe(self.dbobjJwt.execute_statment("get_token_by_cod('%s')" %
                             (wrtMetada['result'][0]['cod_token'])), globalsObj.ioloop)
-                        assert not task.done()
-                        jwt = task.result()
+                        #assert not task.done()
+                        #jwt = task.result()
+                        jwt = waitFuture(task)
 
                         response_obj = ResponseObj(httpcode=200, ID = wrtMetada['result'][0]['ID_assertion'])
                         response_obj.setError('200')

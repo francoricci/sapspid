@@ -11,6 +11,7 @@ from onelogin.saml2 import compat
 import re
 import asyncio
 import globalsObj
+import time
 
 
 class Saml2_Settings(OneLogin_Saml2_Settings):
@@ -331,4 +332,15 @@ def xmlRemoveDeclaration(xml):
         return xml
 
     return re.sub("<\?xml[^>]+>", "", xml)
+
+def waitFuture(future, timeout=0):
+    start = time.time()
+    while not future.done():
+
+        if timeout > 0 and (time.time()-start) > timeout:
+            future.cancel()
+            raise asyncio.CancelledError
+
+    return future.result()
+
 

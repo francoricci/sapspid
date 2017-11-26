@@ -14,7 +14,7 @@ from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 import globalsObj
 import easyspid.lib.easyspid
-from easyspid.lib.utils import Saml2_Settings
+from easyspid.lib.utils import Saml2_Settings, waitFuture
 from easyspid.handlers.getMetadata import getMetadatahandler
 
 class loginhandler(authnreqBuildhandler):
@@ -82,8 +82,9 @@ class loginhandler(authnreqBuildhandler):
                 # get relay state
                 task  = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_service(%s, '%s', '%s')" %
                              ('True', srelay_cod, sp)), globalsObj.ioloop)
-                assert not task.done()
-                srelay = task.result()
+                #assert not task.done()
+                #srelay = task.result()
+                srelay = waitFuture(task)
 
                 if srelay['error'] == 0 and srelay['result'] is None:
                     response_obj = ResponseObj(httpcode=404)
