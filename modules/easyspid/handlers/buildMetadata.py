@@ -58,30 +58,38 @@ class buildMetadatahandler(easyspidHandler):
         try:
             makeMetadata = self.makeMetadata(sp_settings)
 
-            if makeMetadata.error == '200':
-                metadata = self.makeMetadata(sp_settings).result.metadata
+            if makeMetadata.error.code == '200':
+                metadata = makeMetadata.result.metadata
                 sp = sp_settings['result']['sp']['cod_sp']
 
                 ## insert into DB
                 if dbSave:
                     task = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("write_assertion('%s', '%s', %s, '%s')" %
                         (metadata.replace("'", "''"), sp, 'NULL', self.remote_ip)), globalsObj.ioloop)
-                    #assert not task.done()
-                    #wrtMetada = task.result()
                     wrtMetada = waitFuture(task)
+
+                    #task1 = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_query(self.dbobjSaml.query['chk_metadata_validity']['sql'],
+                    #                                                                      sp), globalsObj.ioloop)
+                    #chk_metadata = waitFuture(task1)
 
                     if wrtMetada['error'] == 0:
 
                         task = asyncio.run_coroutine_threadsafe(self.dbobjJwt.execute_statment("get_token_by_cod('%s')" %
                             (wrtMetada['result'][0]['cod_token'])), globalsObj.ioloop)
-                        #assert not task.done()
-                        #jwt = task.result()
                         jwt = waitFuture(task)
 
                         response_obj = ResponseObj(httpcode=200, ID = wrtMetada['result'][0]['ID_assertion'])
                         response_obj.setError('200')
                         response_obj.setResult(metadata = metadata, jwt=jwt['result'][0]['token'],
                                                idassertion=wrtMetada['result'][0]['ID_assertion'])
+
+                        # insert metadata in saml.metadata table
+                        asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_query(self.dbobjSaml.query['insert_metadata']['sql'],
+                                sp+"_metadata", metadata, sp), globalsObj.ioloop)
+
+                        #if chk_metadata['error'] == 0 and chk_metadata['result'][0]['chk'] == 0:
+                        #    asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_query(self.dbobjSaml.query['insert_metadata']['sql'],
+                        #        sp+"_metadata", metadata, sp), globalsObj.ioloop)
                     else:
                         response_obj = ResponseObj(httpcode=500, debugMessage=wrtMetada['result'])
                         response_obj.setError("easyspid105")

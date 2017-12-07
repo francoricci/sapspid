@@ -98,7 +98,7 @@ class responseHandler(easyspidHandler):
 
             try:
                 task = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_service(%s, '%s', '%s')" %
-                    ('True', srelay, sp)),globalsObj.ioloop)
+                    ('True', str(srelay_cod), sp)),globalsObj.ioloop)
                 #assert not task.done()
                 #service = task.result()
                 service = waitFuture(task)

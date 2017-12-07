@@ -76,11 +76,15 @@
             "in": "query",
             "required": true,
             "type": "string",
-            "description": "token type. jwt1: Default jwt type, jwt2: Generic saml assertions token, jwt1_es256: jwt ECDSA 256 asymmetric keys",
+            "description": "token type. jwt1: sha-256, jwt2: sha-384, jwt3: sha-512, jwt1_es256: jwt ECDSA 256 asymmetric keys",
             "default": "jwt1",
             "enum": [
               "jwt1",
               "jwt2",
+              "jwt3",
+              "jwt1_formez",
+              "jwt2_formez",
+              "jwt3_formez",
               "jwt1_es256"
             ]
           }

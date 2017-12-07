@@ -8,19 +8,34 @@ import logging
 from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
+from easyspid.handlers.buildMetadata import buildMetadatahandler
 import globalsObj
+import easyspid.lib.easyspid
 
-class getMetadatahandler(easyspidHandler):
+class getMetadatahandler(buildMetadatahandler):
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
     #get
     async def get(self, sp):
+        x_real_ip = self.request.headers.get("X-Real-IP")
+        self.remote_ip = x_real_ip or self.request.remote_ip
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
 
         try:
+            ##ceck provider type
+            provider_type = await self.dbobjSaml.execute_query(self.dbobjSaml.query['get_provider']['sql'], sp)
+
+            if provider_type['error'] == 0 and provider_type['result'][0]['type'] == 'sp':
+                chk_metadata = await self.dbobjSaml.execute_query(self.dbobjSaml.query['chk_metadata_validity']['sql'], sp)
+
+                if chk_metadata['error'] == 0 and chk_metadata['result'][0]['chk'] == 0:
+                    sp_settings = await easyspid.lib.easyspid.spSettings(sp, close = True)
+                    await asyncio.get_event_loop().run_in_executor(self.executor, self.buildMetadata, sp_settings)
+                    #self.buildMetadata(sp_settings, dbSave = True)
+
             sp_metadata  = await self.dbobjSaml.execute_statment("get_prvd_metadta('%s')" % sp)
 
         except tornado.web.MissingArgumentError as error:
@@ -59,11 +74,13 @@ class getMetadatahandler(easyspidHandler):
             public_key = sp_metadata['result'][0]['public_key']
             fingerprint = sp_metadata['result'][0]['fingerprint']
             fingerprintalg = sp_metadata['result'][0]['fingerprintalg']
-            private_key = sp_metadata['result'][0]['private_key']
+            #private_key = sp_metadata['result'][0]['private_key']
 
             response_obj = ResponseObj(httpcode=200)
             response_obj.setError('200')
-            response_obj.setResult(metadata = metadata, x509cert = public_key, key = private_key,
+            #response_obj.setResult(metadata = metadata, x509cert = public_key, key = private_key,
+            #            x509certFingerPrint = fingerprint, fingerPrintAlg = fingerprintalg)
+            response_obj.setResult(metadata = metadata, x509cert = public_key,
                         x509certFingerPrint = fingerprint, fingerPrintAlg = fingerprintalg)
 
         elif sp_metadata['error'] == 0 and sp_metadata['result'] is None:

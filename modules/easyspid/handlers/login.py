@@ -81,7 +81,7 @@ class loginhandler(authnreqBuildhandler):
 
                 # get relay state
                 task  = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_service(%s, '%s', '%s')" %
-                             ('True', srelay_cod, sp)), globalsObj.ioloop)
+                             ('True', str(srelay_cod), sp)), globalsObj.ioloop)
                 #assert not task.done()
                 #srelay = task.result()
                 srelay = waitFuture(task)
