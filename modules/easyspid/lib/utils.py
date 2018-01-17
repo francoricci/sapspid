@@ -1,6 +1,7 @@
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.metadata import OneLogin_Saml2_Metadata
+from easyspid.lib.metadata import MetaDataBuilder
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from onelogin.saml2.utils import OneLogin_Saml2_XML
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
@@ -12,6 +13,7 @@ import re
 import asyncio
 import globalsObj
 import time
+import xmlsec
 
 
 class Saml2_Settings(OneLogin_Saml2_Settings):
@@ -25,7 +27,7 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
         :returns: SP metadata (xml)
         :rtype: string
         """
-        metadata = OneLogin_Saml2_Metadata.builder(
+        metadata = MetaDataBuilder(
             self._OneLogin_Saml2_Settings__sp,
             self._OneLogin_Saml2_Settings__security['authnRequestsSigned'],
             self._OneLogin_Saml2_Settings__security['wantAssertionsSigned'],
@@ -175,7 +177,8 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
             signature_algorithm = self._OneLogin_Saml2_Settings__security['signatureAlgorithm']
             digest_algorithm = self._OneLogin_Saml2_Settings__security['digestAlgorithm']
 
-            metadata = OneLogin_Saml2_Metadata.sign_metadata(metadata, key_metadata, cert_metadata, signature_algorithm, digest_algorithm)
+            #metadata = OneLogin_Saml2_Metadata.sign_metadata(metadata, key_metadata, cert_metadata, signature_algorithm, digest_algorithm)
+            metadata = AddSign(metadata, key_metadata, cert_metadata, False, signature_algorithm, digest_algorithm)
 
         return metadata
 
@@ -241,6 +244,84 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
             result['signCheck'] = True
 
         return result
+
+def AddSign(xml, key, cert, debug=False, sign_algorithm=OneLogin_Saml2_Constants.RSA_SHA1, digest_algorithm=OneLogin_Saml2_Constants.SHA1):
+        """
+        Adds signature key and senders certificate to an element (Message or
+        Assertion).
+
+        :param xml: The element we should sign
+        :type: string | Document
+
+        :param key: The private key
+        :type: string
+
+        :param cert: The public
+        :type: string
+
+        :param debug: Activate the xmlsec debug
+        :type: bool
+
+        :param sign_algorithm: Signature algorithm method
+        :type sign_algorithm: string
+
+        :param digest_algorithm: Digest algorithm method
+        :type digest_algorithm: string
+
+        :returns: Signed XML
+        :rtype: string
+        """
+        if xml is None or xml == '':
+            raise Exception('Empty string supplied as input')
+
+        elem = OneLogin_Saml2_XML.to_etree(xml)
+        xmlsec.enable_debug_trace(debug)
+        xmlsec.tree.add_ids(elem, ["ID"])
+        # Sign the metadata with our private key.
+        sign_algorithm_transform_map = {
+            OneLogin_Saml2_Constants.DSA_SHA1: xmlsec.Transform.DSA_SHA1,
+            OneLogin_Saml2_Constants.RSA_SHA1: xmlsec.Transform.RSA_SHA1,
+            OneLogin_Saml2_Constants.RSA_SHA256: xmlsec.Transform.RSA_SHA256,
+            OneLogin_Saml2_Constants.RSA_SHA384: xmlsec.Transform.RSA_SHA384,
+            OneLogin_Saml2_Constants.RSA_SHA512: xmlsec.Transform.RSA_SHA512
+        }
+        sign_algorithm_transform = sign_algorithm_transform_map.get(sign_algorithm, xmlsec.Transform.RSA_SHA1)
+
+        signature = xmlsec.template.create(elem, xmlsec.Transform.EXCL_C14N, sign_algorithm_transform, ns='ds')
+
+        issuer = OneLogin_Saml2_XML.query(elem, '//saml:Issuer')
+        if len(issuer) > 0:
+            issuer = issuer[0]
+            issuer.addnext(signature)
+        else:
+            elem.insert(0, signature)
+
+        elem_id = elem.get('ID', None)
+        if elem_id:
+            elem_id = '#' + elem_id
+
+        digest_algorithm_transform_map = {
+            OneLogin_Saml2_Constants.SHA1: xmlsec.Transform.SHA1,
+            OneLogin_Saml2_Constants.SHA256: xmlsec.Transform.SHA256,
+            OneLogin_Saml2_Constants.SHA384: xmlsec.Transform.SHA384,
+            OneLogin_Saml2_Constants.SHA512: xmlsec.Transform.SHA512
+        }
+        digest_algorithm_transform = digest_algorithm_transform_map.get(digest_algorithm, xmlsec.Transform.SHA1)
+
+        ref = xmlsec.template.add_reference(signature, digest_algorithm_transform, uri=elem_id)
+        xmlsec.template.add_transform(ref, xmlsec.Transform.ENVELOPED)
+        xmlsec.template.add_transform(ref, xmlsec.Transform.EXCL_C14N)
+        key_info = xmlsec.template.ensure_key_info(signature)
+        xmlsec.template.add_x509_data(key_info)
+
+        dsig_ctx = xmlsec.SignatureContext()
+        sign_key = xmlsec.Key.from_memory(key, xmlsec.KeyFormat.PEM, None)
+        sign_key.load_cert_from_memory(cert, xmlsec.KeyFormat.PEM)
+
+        dsig_ctx.key = sign_key
+        dsig_ctx.sign(signature)
+
+        return OneLogin_Saml2_XML.to_string(elem)
 
 def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
 

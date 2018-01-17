@@ -10,12 +10,11 @@ import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
-from easyspid.lib.utils import Saml2_Settings, waitFuture
+from easyspid.lib.utils import Saml2_Settings, waitFuture, AddSign
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from easyspid.handlers.buildMetadata import buildMetadatahandler
-from onelogin.saml2.authn_request import OneLogin_Saml2_Authn_Request
-from onelogin.saml2.utils import OneLogin_Saml2_Utils
 import xml.etree.ElementTree
+from easyspid.lib.authn_request import Saml2_Authn_Request
 
 
 class authnreqBuildhandler(easyspidHandler):
@@ -35,16 +34,29 @@ class authnreqBuildhandler(easyspidHandler):
         idp = self.get_argument('idp')
         attributeIndex = self.get_argument('attrindex')
         binding = self.get_argument('binding')
+        sp_metadata = None
 
         #settings
-        sp_settings = await easyspid.lib.easyspid.spSettings(sp, idp, binding=bindingMap[binding], close = True)
-        response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.buildAthnReq, sp_settings, attributeIndex, binding)
+        task1 = asyncio.ensure_future(easyspid.lib.easyspid.spSettings(sp, idp, binding=bindingMap[binding], close = True),
+                loop = globalsObj.ioloop)
+        #sp_settings = await easyspid.lib.easyspid.spSettings(sp, idp, binding=bindingMap[binding], close = True)
+        chk_metadata = await self.dbobjSaml.execute_query(self.dbobjSaml.query['chk_metadata_validity']['sql'], sp)
 
+        if chk_metadata['error'] == 0 and chk_metadata['result'][0]['chk'] > 0:
+            sp_metadata_result  = await self.dbobjSaml.execute_statment("get_prvd_metadta('%s')" % sp)
+
+            if sp_metadata_result['error'] == 0 and sp_metadata_result['result'] is not None:
+                sp_metadata = sp_metadata_result['result'][0]['xml']
+
+        sp_settings = await task1
+
+        #response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.buildAthnReq, sp_settings, attributeIndex, binding)
+        response_obj = await asyncio.get_event_loop().run_in_executor(self.executor, self.buildAthnReq, sp_settings, attributeIndex, sp_metadata)
         asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
         super().writeResponse(response_obj)
 
 
-    def buildAthnReq(self, sp_settings, attributeIndex, signed = True):
+    def buildAthnReq(self, sp_settings, attributeIndex, sp_metadata = None, signed = True):
 
         try:
             if sp_settings['error'] == 0 and sp_settings['result'] is not None:
@@ -52,7 +64,9 @@ class authnreqBuildhandler(easyspidHandler):
                 idp = sp_settings['result']['idp']['cod_idp']
 
                 # get sp metadata to read attributeIndex location.
-                sp_metadata = buildMetadatahandler.makeMetadata(sp_settings).result.metadata
+                if sp_metadata is None:
+                    sp_metadata = buildMetadatahandler.makeMetadata(sp_settings).result.metadata
+
                 ns = {'md0': OneLogin_Saml2_Constants.NS_MD, 'md1': OneLogin_Saml2_Constants.NS_SAML}
                 parsedMetadata = xml.etree.ElementTree.fromstring(sp_metadata)
                 attributeConsumingService = parsedMetadata.find("md0:SPSSODescriptor/md0:AssertionConsumerService[@index='%s']" %
@@ -70,7 +84,7 @@ class authnreqBuildhandler(easyspidHandler):
                 digest = (spSettings.get_security_data())['digestAlgorithm']
 
                 # build auth request
-                authn_request = OneLogin_Saml2_Authn_Request(spSettings, force_authn=True, is_passive=False, set_nameid_policy=True)
+                authn_request = Saml2_Authn_Request(spSettings, force_authn=True, is_passive=False, set_nameid_policy=True)
                 authn_request_xml = authn_request.get_xml()
 
                 ## inserisci attribute index
@@ -89,8 +103,9 @@ class authnreqBuildhandler(easyspidHandler):
                 ## inserisci attributi del nodo isuuer
                 authn_request_xml = xml.etree.ElementTree.tostring(parsedMetadata, encoding="unicode")
                 if signed:
-                    authn_request_signed = OneLogin_Saml2_Utils.add_sign(authn_request_xml, key, cert, debug=False,
-                                        sign_algorithm=sign_alg, digest_algorithm=digest)
+                    #authn_request_signed = OneLogin_Saml2_Utils.add_sign(authn_request_xml, key, cert, debug=False,
+                    #                    sign_algorithm=sign_alg, digest_algorithm=digest)
+                    authn_request_signed = AddSign(authn_request_xml, key, cert, False, sign_alg, digest)
                     authn_request_signed = str(authn_request_signed,'utf-8')
                 else:
                     authn_request_signed = authn_request_xml

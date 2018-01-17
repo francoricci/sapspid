@@ -88,9 +88,6 @@ class buildMetadatahandler(easyspidHandler):
                                 sp+"_metadata", metadata, sp), globalsObj.ioloop)
                         insert_metadata = waitFuture(task)
 
-                        #if chk_metadata['error'] == 0 and chk_metadata['result'][0]['chk'] == 0:
-                        #    asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_query(self.dbobjSaml.query['insert_metadata']['sql'],
-                        #        sp+"_metadata", metadata, sp), globalsObj.ioloop)
                     else:
                         response_obj = ResponseObj(httpcode=500, debugMessage=wrtMetada['result'])
                         response_obj.setError("easyspid105")

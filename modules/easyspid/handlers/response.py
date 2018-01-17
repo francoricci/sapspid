@@ -34,9 +34,10 @@ class responseHandler(easyspidHandler):
 
         if response_obj.error.httpcode == 200:
             asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
+
             self.set_header('Content-Type', 'text/html; charset=UTF-8')
             self.set_status(response_obj.error.httpcode)
-            self.write(response_obj.result.postTo)
+            self.write(self.postTo)
             self.finish()
             return
 
@@ -232,15 +233,15 @@ class responseHandler(easyspidHandler):
                     with open(globalsObj.easyspid_responseFormPath, 'r') as myfile:
                         response_form = myfile.read()
 
-                response_form = response_form.replace("%URLTARGET%",self.routing['url'])
-                response_form = response_form.replace("%SAMLRESPONSE%",responsePost)
-                response_form = response_form.replace("%JSONRESPONSE%",OneLogin_Saml2_Utils.b64encode(response))
-                response_form = response_form.replace("%RELAYSTATE%",srelayPost)
-
                 response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result'][0]['ID_assertion'])
                 response_obj.setError('200')
                 response_obj.setResult(attributes = attributes, jwt = jwt['result'][0]['token'], responseValidate = chk,
-                        response = str(response, 'utf-8'), responseBase64 = responsePost, postTo = response_form)
+                        response = str(response, 'utf-8'))
+
+                response_form = response_form.replace("%URLTARGET%",self.routing['url'])
+                response_form = response_form.replace("%RELAYSTATE%",srelayPost)
+                response_form = response_form.replace("%JSONRESPONSE%",OneLogin_Saml2_Utils.b64encode(response_obj.jsonWrite()))
+                self.postTo = response_form
 
             elif sp_settings['error'] == 0 and sp_settings['result'] == None:
                 response_obj = ResponseObj(httpcode=404)
