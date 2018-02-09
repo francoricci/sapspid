@@ -226,6 +226,12 @@ class responseHandler(easyspidHandler):
                 #get all attributes
                 attributes = OneLoginResponse.get_attributes()
 
+                #fix attributes structure
+                attributes_tmp = dict()
+                for key in attributes:
+                    attributes_tmp[key] = attributes[key][0]
+                attributes = attributes_tmp;
+
                 try:
                     with open(os.path.join(globalsObj.rootFolder, globalsObj.easyspid_responseFormPath), 'r') as myfile:
                         response_form = myfile.read()

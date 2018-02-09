@@ -29,12 +29,14 @@ class loginhandler(authnreqBuildhandler):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
 
+        bindingMap = {'redirect':OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
+                          'post': OneLogin_Saml2_Constants.BINDING_HTTP_POST}
         idp = self.get_argument('idp')
         attributeIndex = self.get_argument('attrindex')
         binding = self.get_argument('binding')
         srelay = self.get_argument('srelay')
 
-        task1 = asyncio.ensure_future(easyspid.lib.easyspid.spSettings(sp, idp, close = True))
+        task1 = asyncio.ensure_future(easyspid.lib.easyspid.spSettings(sp, idp, binding=bindingMap[binding], close = True))
         task2 = asyncio.ensure_future(self.dbobjSaml.execute_statment("get_prvd_metadta('%s')" % idp))
 
         sp_settings = await task1

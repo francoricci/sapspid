@@ -299,6 +299,8 @@ def AddSign(xml, key, cert, debug=False, sign_algorithm=OneLogin_Saml2_Constants
         elem_id = elem.get('ID', None)
         if elem_id:
             elem_id = '#' + elem_id
+        #else:
+        #    elem_id = ""
 
         digest_algorithm_transform_map = {
             OneLogin_Saml2_Constants.SHA1: xmlsec.Transform.SHA1,

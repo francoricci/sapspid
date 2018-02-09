@@ -140,9 +140,9 @@ def MetaDataBuilder(sp, authnsign=False, wsign=False, valid_until=None, cache_du
             requested_attribute_data.append(requested_attribute)
 
         str_attribute_consuming_service = """        <md:AttributeConsumingService index="1">
-        <md:ServiceName xml:lang="it">%(service_name)s</md:ServiceName>
+            <md:ServiceName xml:lang="it">%(service_name)s</md:ServiceName>
 %(attr_cs_desc)s%(requested_attribute_str)s
-    </md:AttributeConsumingService>
+        </md:AttributeConsumingService>
 """ % \
             {
                 'service_name': escape(sp['attributeConsumingService']['serviceName']),

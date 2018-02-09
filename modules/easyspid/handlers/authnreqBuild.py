@@ -15,7 +15,7 @@ from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from easyspid.handlers.buildMetadata import buildMetadatahandler
 import xml.etree.ElementTree
 from easyspid.lib.authn_request import Saml2_Authn_Request
-
+from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 class authnreqBuildhandler(easyspidHandler):
 
