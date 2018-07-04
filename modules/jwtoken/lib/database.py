@@ -108,6 +108,6 @@ class Database(object):
 async def init_pool(settings, init):
 
     pool = await asyncpg.create_pool(dsn = settings['dsn'], min_size = settings['min_conn'],
-                                     max_size = settings['max_conn'], init = init)
+                                     max_size = settings['max_conn'], init = init, ssl=False)
     return pool
         

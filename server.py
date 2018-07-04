@@ -18,6 +18,8 @@ import globalsObj
 import commonlib
 from tornado.platform.asyncio import AsyncIOMainLoop
 import asyncio
+from mutornadomon.config import initialize_mutornadomon
+import signal
 
 """
 Load default logging file config
@@ -40,8 +42,10 @@ globalsObj.configuration = commonlib.configure(globalsObj.cmdLineoOptions.filena
 
 if os.path.exists(os.path.join(globalsObj.rootFolder, globalsObj.configuration.get('Application','modules_dir'))):
     globalsObj.modules_basedir = os.path.join(globalsObj.rootFolder, globalsObj.configuration.get('Application','modules_dir'))
+    sys.path.append(globalsObj.modules_basedir)
 else:
     globalsObj.modules_basedir = globalsObj.configuration.get('Application','modules_dir')
+    sys.path.append(globalsObj.modules_basedir)
 
 if os.path.isfile(os.path.join(path, globalsObj.configuration.get('logging','conf'))):
     globalsObj.lastLoggingFile = os.path.join(path, globalsObj.configuration.get('logging','conf'))
@@ -146,6 +150,13 @@ class WebApp(tornado.web.Application):
             rootLogger.error("Tornado web error: %s" % (error))
 
 
+def shut_down(*args):
+    rootLogger.warning("Torando ioloop is stopping ....")
+    if globalsObj.configuration.getboolean('Monitor','enable'):
+        monitor.stop()
+    globalsObj.ioloop.stop()
+    rootLogger.warning("Torando stopped!")
+
 if __name__ == '__main__':
     rootLogger = logging.getLogger(__name__)
 
@@ -156,6 +167,15 @@ if __name__ == '__main__':
     # create app
     globalsObj.ws_configuration.read_dict(globalsObj.deniedPath)
     webapp = WebApp(globalsObj.configuration, globalsObj.ws_configuration)
+
+    # initialize monitor
+    if globalsObj.configuration.getboolean('Monitor','enable'):
+        monitor = initialize_mutornadomon(webapp, request_filter=commonlib.match_host)
+        # edit mutornadomon
+        webapp.URLSpec
+
+    for sig in (signal.SIGQUIT, signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, shut_down)
 
     # set backend to serilize objects
     jsonpickle.set_preferred_backend('simplejson')

@@ -1,10 +1,11 @@
 import globalsObj
 import commonlib as commonlib
 import jwtoken.lib.database
+import os
 
 
-JWT_ERRORS_FILE_PATH = "modules/jwtoken/conf/errors.ini"
-JWT_CONFIG_FILE_PATH = "modules/jwtoken/conf/jwtoken.ini"
+JWT_ERRORS_FILE_PATH = os.path.join(globalsObj.modules_basedir, "jwtoken/conf/errors.ini")
+JWT_CONFIG_FILE_PATH = os.path.join(globalsObj.modules_basedir, "jwtoken/conf/jwtoken.ini")
 
 # carica le configurazioni globali e locali del modulo
 jwtoken_file_configuration = commonlib.configure(JWT_CONFIG_FILE_PATH)

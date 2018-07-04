@@ -12,9 +12,10 @@ from hashlib import sha1, sha256, sha384, sha512
 import base64
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 import asyncio
+import os
 
-ESPID_ERRORS_FILE_PATH = "modules/easyspid/conf/errors.ini"
-ESPID_CONFIG_FILE_PATH = "modules/easyspid/conf/easyspid.ini"
+ESPID_ERRORS_FILE_PATH = os.path.join(globalsObj.modules_basedir, "easyspid/conf/errors.ini")
+ESPID_CONFIG_FILE_PATH = os.path.join(globalsObj.modules_basedir, "easyspid/conf/easyspid.ini")
 
 # carica le configurazioni globali e locali del modulo
 easyspid_file_configuration = commonlib.configure(ESPID_CONFIG_FILE_PATH)
@@ -28,6 +29,13 @@ easyspid_error_configuration = commonlib.configure(ESPID_ERRORS_FILE_PATH)
 globalsObj.easyspid_DbMaster_conf = dict(easyspid_file_configuration.items('DbMaster'))
 globalsObj.easyspid_postFormPath = easyspid_file_configuration.get('AuthnRequest','postFormPath')
 globalsObj.easyspid_responseFormPath = easyspid_file_configuration.get('Response','responseFormPath')
+globalsObj.easyspid_SAMLresponseFormPath = easyspid_file_configuration.get('Response','SAMLresponseFormPath')
+globalsObj.easyspid_chkTime = easyspid_file_configuration.getboolean('Response','chkTime')
+globalsObj.easyspid_chkTime = easyspid_file_configuration.getboolean('Response','chkTime')
+globalsObj.easyspid_checkInResponseTo = easyspid_file_configuration.getboolean('Response','checkInResponseTo')
+globalsObj.easyspid_checkCertificateValidity = easyspid_file_configuration.getboolean('Response','checkCertificateValidity')
+globalsObj.easyspid_checkCertificateAllowed = easyspid_file_configuration.getboolean('Response','checkCertificateAllowed')
+
 
 # istanzia tutte le sezioni degli errori nel file globalsObj
 for i, val in enumerate(easyspid_error_configuration.sections()):

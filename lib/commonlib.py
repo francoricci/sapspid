@@ -1,6 +1,6 @@
 import configparser
 import os
-import signal
+#import signal
 import logging
 import argparse
 import re
@@ -32,18 +32,18 @@ def writePid(file):
     fileHandler.close()
 
 """ send kill signal to a process with pid """
-def kill(pid):
-    try:
-        os.kill(pid, signal.SIGKILL)
-    except OSError:
-        pass
+# def kill(pid):
+#     try:
+#         os.kill(pid, signal.SIGKILL)
+#     except OSError:
+#         pass
 
 """ send term signal to a process with pid """
-def term(pid):
-    try:
-        os.kill(pid, signal.SIGTERM)
-    except OSError:
-        pass
+# def term(pid):
+#     try:
+#         os.kill(pid, signal.SIGTERM)
+#     except OSError:
+#         pass
 
 def commandLine(configFile):
     cmd_line_parser = argparse.ArgumentParser(description = 'Tornado Web Server')
@@ -171,3 +171,7 @@ def incrementalIniFile(newIni, oldIni = None, rawParser = True, separator = ',',
             outConfig.set(section, option, newValue)
 
     return outConfig
+
+def match_host(request):
+    xff = request.headers.get('X-Forwarded-For', None)
+    return True

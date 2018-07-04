@@ -5,6 +5,8 @@ from easyspid.lib.metadata import MetaDataBuilder
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from onelogin.saml2.utils import OneLogin_Saml2_XML
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
+from onelogin.saml2.response import OneLogin_Saml2_Response
+from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
 import easyspid.lib.easyspid
 import xml.etree.ElementTree
 from lxml import etree
@@ -328,7 +330,8 @@ def AddSign(xml, key, cert, debug=False, sign_algorithm=OneLogin_Saml2_Constants
 def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
 
     result = {'schemaValidate':False, 'signCheck':False, 'certValidity':False,
-              'certAllowed':True, 'error':0, 'msg':'', 'assertionName': None}
+              'certAllowed':True, 'error':0, 'msg':'', 'assertionName': None, 'chkTime': None,
+              'chkStatus': None, 'serviceAttributes': None}
 
     assert isinstance(xml, compat.text_types)
 
@@ -337,6 +340,7 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
         result['msg'] = 'Empty string supplied as input'
         return  result
 
+    OneLoginResponse = OneLogin_Saml2_Response({}, OneLogin_Saml2_Utils.b64encode(xml))
     xml = xmlRemoveDeclaration(xml)
     parsedassertion = etree.fromstring(xml)
 
@@ -372,6 +376,7 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
     if isinstance(schemaCheck, str):
         result['msg'] = schemaCheck
         result['schemaValidate'] = False
+        result['error'] = 3
     else:
         result['schemaValidate'] = True
 
@@ -397,8 +402,10 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
 
     if signCheck:
         result['signCheck'] = True
+    else:
+        result['error'] = 3
 
-    # checktime validity certificate
+    # check expired certificate
     certTimeValdity = easyspid.lib.easyspid.timeValidateCert(signingcert)
     if certTimeValdity:
         result['certValidity'] = True
@@ -406,6 +413,28 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
     # checktime certificate allow
     if allowedfingerprint != signingfingerprint:
         result['certAllowed'] = False
+        result['error'] = 3
+
+    try:
+        OneLoginResponse.validate_timestamps(raise_exceptions=True)
+        result['chkTime'] = True
+
+    except OneLogin_Saml2_ValidationError as error:
+        result['chkTime'] = False
+        result['error'] = 3
+
+    try:
+        OneLoginResponse.check_status()
+        result['chkStatus'] = True
+
+    except OneLogin_Saml2_ValidationError as error:
+        result['chkStatus'] = False
+        result['error'] = 3
+
+    try:
+        result['serviceAttributes'] = OneLoginResponse.get_attributes()
+    except:
+        pass
 
     return result
 
@@ -425,5 +454,3 @@ def waitFuture(future, timeout=0):
             raise asyncio.CancelledError
 
     return future.result()
-
-

@@ -16,6 +16,7 @@ import globalsObj
 import easyspid.lib.easyspid
 from easyspid.lib.utils import Saml2_Settings, waitFuture
 from easyspid.handlers.getMetadata import getMetadatahandler
+import os
 
 class loginhandler(authnreqBuildhandler):
 
@@ -147,7 +148,7 @@ class loginhandler(authnreqBuildhandler):
                     idpsso = idp_settings['singleSignOnService']['url']
 
                     try:
-                        with open(os.path.join(globalsObj.rootFolder, globalsObj.easyspid_postFormPath), 'r') as myfile:
+                        with open(os.path.join(globalsObj.modules_basedir, globalsObj.easyspid_postFormPath), 'r') as myfile:
                             post_form = myfile.read().replace('\n', '')
                     except:
                         with open(globalsObj.easyspid_postFormPath, 'r') as myfile:
