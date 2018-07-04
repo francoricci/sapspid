@@ -41,9 +41,13 @@ In particolare:
 * PL/Python
 * POstgreSQL uuid-ossp extension
 * uvloop (opzionale)
+* six
+* psutil
+* moch
+* ipcalc
 
 
-Attualemnte sapspud è installato su un sistema FreeBSD 11 a 64bit.
+Attualemnte sapspid è installato su un sistema FreeBSD 11 a 64bit.
 
 # INSTALLAZIONE
 Scaricare la release 1.0 di sapspid e copiarla in un path del server: `/path/to/sapspid`
