@@ -171,8 +171,6 @@ if __name__ == '__main__':
     # initialize monitor
     if globalsObj.configuration.getboolean('Monitor','enable'):
         monitor = initialize_mutornadomon(webapp, request_filter=commonlib.match_host)
-        # edit mutornadomon
-        webapp.URLSpec
 
     for sig in (signal.SIGQUIT, signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, shut_down)
