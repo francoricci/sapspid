@@ -369,7 +369,11 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
 
     result['assertionName'] = assertionName
     # get certificate signing
-    signingcert = easyspid.lib.easyspid.get_signature_cert(xml)
+    try:
+        signingcert = easyspid.lib.easyspid.get_signature_cert(xml)
+
+    except Exception as error:
+        signingcert = False
 
     # validate xml against its schema
     schemaCheck = OneLogin_Saml2_XML.validate_xml(xml, asscertionShema, False)
@@ -381,39 +385,45 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
         result['schemaValidate'] = True
 
     # check signature
-    signingfingerprintalg = 'sha1'
-    if fingerprintalg is not None:
-        signingfingerprintalg = fingerprintalg
+    if signingcert:
+        signingfingerprintalg = 'sha1'
+        if fingerprintalg is not None:
+            signingfingerprintalg = fingerprintalg
 
-    signingfingerprint = (easyspid.lib.easyspid.calcCertFingerprint(signingcert, signingfingerprintalg))['result']
+        signingfingerprint = (easyspid.lib.easyspid.calcCertFingerprint(signingcert, signingfingerprintalg))['result']
 
-    if assertionName == 'EntityDescriptor' and fingerprint is None:
-        allowedCert = easyspid.lib.easyspid.get_metadata_allowed_cert(xml)
-        allowedfingerprint = (easyspid.lib.easyspid.calcCertFingerprint(allowedCert, signingfingerprintalg))['result']
+        if assertionName == 'EntityDescriptor' and fingerprint is None:
+            allowedCert = easyspid.lib.easyspid.get_metadata_allowed_cert(xml)
+            allowedfingerprint = (easyspid.lib.easyspid.calcCertFingerprint(allowedCert, signingfingerprintalg))['result']
 
-    elif assertionName != 'EntityDescriptor' and fingerprint is None:
-        allowedfingerprint = signingfingerprint
+        elif assertionName != 'EntityDescriptor' and fingerprint is None:
+            allowedfingerprint = signingfingerprint
 
-    if fingerprint is not None:
-        allowedfingerprint = fingerprint
+        if fingerprint is not None:
+            allowedfingerprint = fingerprint
 
-    signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=signingcert, fingerprint=signingfingerprint,
-        fingerprintalg = signingfingerprintalg, validatecert=False, debug=False, xpath=signatureNodeXpath, multicerts=None)
+        signCheck = OneLogin_Saml2_Utils.validate_sign(xml, cert=signingcert, fingerprint=signingfingerprint,
+            fingerprintalg = signingfingerprintalg, validatecert=False, debug=False, xpath=signatureNodeXpath, multicerts=None)
 
-    if signCheck:
-        result['signCheck'] = True
-    else:
-        result['error'] = 3
+        if signCheck:
+            result['signCheck'] = True
+        else:
+            result['error'] = 3
 
-    # check expired certificate
-    certTimeValdity = easyspid.lib.easyspid.timeValidateCert(signingcert)
-    if certTimeValdity:
-        result['certValidity'] = True
+        # check expired certificate
+        certTimeValdity = easyspid.lib.easyspid.timeValidateCert(signingcert)
+        if certTimeValdity:
+            result['certValidity'] = True
 
-    # checktime certificate allow
-    if allowedfingerprint != signingfingerprint:
-        result['certAllowed'] = False
-        result['error'] = 3
+        # checktime certificate allow
+        if allowedfingerprint != signingfingerprint:
+            result['certAllowed'] = False
+            result['error'] = 3
+
+    elif not signingcert and assertionName == 'AuthnRequest':
+        result['signCheck'] = None
+        result['certValidity'] = None
+        result['certAllowed'] = None
 
     try:
         OneLoginResponse.validate_timestamps(raise_exceptions=True)

@@ -47,7 +47,7 @@ class jwtokenHandler(RequestHandler):
         self.finish()
 
     async def writeLog(self, response_obj):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.jwtoken_originIP_header)
         remote_ip = x_real_ip or self.request.remote_ip
 
         #insert log

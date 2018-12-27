@@ -7,7 +7,6 @@ import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
 import logging
-from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
@@ -18,6 +17,7 @@ from onelogin.saml2.constants import OneLogin_Saml2_Constants
 #from onelogin.saml2.response import OneLogin_Saml2_Response
 #from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
 import xml.etree.ElementTree
+import commonlib
 
 
 class responseHandler(easyspidHandler):
@@ -27,7 +27,7 @@ class responseHandler(easyspidHandler):
 
     #post
     async def post(self):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.easyspid_originIP_header)
         self.remote_ip = x_real_ip or self.request.remote_ip
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
@@ -47,6 +47,7 @@ class responseHandler(easyspidHandler):
         asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
         super().writeResponse(response_obj)
 
+    @commonlib.inner_log
     def processResponse(self, chkTime=True, checkInResponseTo=True):
 
         try:
@@ -188,28 +189,12 @@ class responseHandler(easyspidHandler):
                 else:
                     response_obj = ResponseObj(httpcode=500, debugMessage=wrtAuthn['result'])
                     response_obj.setError("easyspid105")
-                    logging.getLogger(__name__).error('Exception',exc_info=True)
+                    logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
                     return response_obj
 
                 # create settings OneLogin dict
                 settings = sp_settings['result']
                 prvdSettings = Saml2_Settings(sp_settings['result'])
-
-                #OneLoginResponse = OneLogin_Saml2_Response(prvdSettings, responsePost)
-
-                #check status code
-                # try:
-                #     OneLoginResponse.check_status()
-                # except OneLogin_Saml2_ValidationError as error:
-                #     response_obj = ResponseObj(httpcode=401, debugMessage=error.args[0])
-                #     response_obj.setError('easyspid107')
-                #     return response_obj
-
-                # #check audience
-                # if not settings['sp']['entityId'] in OneLoginResponse.get_audiences():
-                #     response_obj = ResponseObj(httpcode=401, debugMessage=OneLoginResponse.get_audiences())
-                #     response_obj.setError('easyspid109')
-                #     return response_obj
 
                 chk = easyspid.lib.utils.validateAssertion(str(response,'utf-8'),
                                 sp_settings['result']['idp']['x509cert_fingerprint'],
@@ -252,12 +237,7 @@ class responseHandler(easyspidHandler):
                     response_obj.setError('easyspid108')
                     return response_obj
 
-                #elif chk['schemaValidate'] and chk['signCheck']:
-                #    response_obj = ResponseObj(httpcode=200, ID = wrtAuthn['result'][0]['ID_assertion'])
-                #    response_obj.setError('200')
-
                 #get all attributes
-                #attributes = OneLoginResponse.get_attributes()
                 attributes = chk['serviceAttributes']
                 attributes_tmp = dict()
                 for key in attributes:
@@ -293,23 +273,16 @@ class responseHandler(easyspidHandler):
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500)
-            response_obj.setError(inst.code)
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('easyspid/processResponse handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         return response_obj
 
+    @commonlib.inner_log
     def passthrough(self):
         try:
             try:
@@ -333,6 +306,6 @@ class responseHandler(easyspidHandler):
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
             return response_obj

@@ -1,9 +1,8 @@
 import globalsObj
 import commonlib as commonlib
-import easyspid.lib.database
 from response import ResponseObj
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
-import easyspid.lib.database
+import database
 import datetime
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -13,6 +12,8 @@ import base64
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 import asyncio
 import os
+import easyspid.lib.statements
+import logging
 
 ESPID_ERRORS_FILE_PATH = os.path.join(globalsObj.modules_basedir, "easyspid/conf/errors.ini")
 ESPID_CONFIG_FILE_PATH = os.path.join(globalsObj.modules_basedir, "easyspid/conf/easyspid.ini")
@@ -35,6 +36,7 @@ globalsObj.easyspid_chkTime = easyspid_file_configuration.getboolean('Response',
 globalsObj.easyspid_checkInResponseTo = easyspid_file_configuration.getboolean('Response','checkInResponseTo')
 globalsObj.easyspid_checkCertificateValidity = easyspid_file_configuration.getboolean('Response','checkCertificateValidity')
 globalsObj.easyspid_checkCertificateAllowed = easyspid_file_configuration.getboolean('Response','checkCertificateAllowed')
+globalsObj.easyspid_originIP_header = easyspid_file_configuration.get('proxy','originIP_header')
 
 
 # istanzia tutte le sezioni degli errori nel file globalsObj
@@ -45,23 +47,17 @@ for i, val in enumerate(easyspid_error_configuration.sections()):
         for j, val2 in enumerate(tempDict.keys()):
             globalsObj.errors_configuration.set(val, val2, tempDict[val2])
 
-## crea il pool per questo modulo
-try:
-    globalsObj.DbConnections
-except Exception as error:
-    globalsObj.DbConnections = dict()
-
 # connect to DB master
-dsnMaster = ("postgres://%s:%s@%s:%s/%s?application_name=%s" % (easyspid_file_configuration.get('DbMaster','user'),
-            easyspid_file_configuration.get('DbMaster','password'), easyspid_file_configuration.get('DbMaster','host'),
-            easyspid_file_configuration.get('DbMaster','port'), easyspid_file_configuration.get('DbMaster','dbname'),
-            easyspid_file_configuration.get('DbMaster','application_name')))
-
-globalsObj.DbConnections['samlMasterdsn'] = dsnMaster
-
-globalsObj.DbConnections['samlDbPoll'] = {'max_conn': easyspid_file_configuration.getint('dbpool','max_conn'),
-                                                'min_conn': easyspid_file_configuration.getint('dbpool','min_conn'),
-                                                'dsn': dsnMaster}
+# dsnMaster = ("postgres://%s:%s@%s:%s/%s?application_name=%s" % (easyspid_file_configuration.get('DbMaster','user'),
+#             easyspid_file_configuration.get('DbMaster','password'), easyspid_file_configuration.get('DbMaster','host'),
+#             easyspid_file_configuration.get('DbMaster','port'), easyspid_file_configuration.get('DbMaster','dbname'),
+#             easyspid_file_configuration.get('DbMaster','application_name')))
+#
+# globalsObj.DbConnections['samlMasterdsn'] = dsnMaster
+#
+# globalsObj.DbConnections['samlDbPoll'] = {'max_conn': easyspid_file_configuration.getint('dbpool','max_conn'),
+#                                                 'min_conn': easyspid_file_configuration.getint('dbpool','min_conn'),
+#                                                 'dsn': dsnMaster}
 
 # set some settings
 globalsObj.easyspidSettings = dict()
@@ -79,10 +75,35 @@ globalsObj.easyspidSettings['idp'] = {
   }
 
 # inizializza Db object e pool
-globalsObj.DbConnections['samlDb'] = easyspid.lib.database.Database()
-pool = globalsObj.ioloop.run_until_complete(easyspid.lib.database.init_pool(globalsObj.DbConnections['samlDbPoll'],
+# globalsObj.DbConnections['samlDb'] = easyspid.lib.database.Database()
+# pool = globalsObj.ioloop.run_until_complete(easyspid.lib.database.init_pool(globalsObj.DbConnections['samlDbPoll'],
+#                                init = globalsObj.DbConnections['samlDb'].prepare_statements))
+# globalsObj.DbConnections['samlDb'].set_pool(pool)
+
+## crea il pool per questo modulo
+try:
+    globalsObj.DbConnections
+except Exception as error:
+    globalsObj.DbConnections = dict()
+
+dsnMaster = ("postgres://%s:%s@%s:%s/%s?application_name=%s" % (globalsObj.modules_configuration['easyspid'].get('DbMaster','user'),
+            globalsObj.modules_configuration['easyspid'].get('DbMaster','password'),
+            globalsObj.modules_configuration['easyspid'].get('DbMaster','host'),
+            globalsObj.modules_configuration['easyspid'].get('DbMaster','port'),
+            globalsObj.modules_configuration['easyspid'].get('DbMaster','dbname'),
+            globalsObj.modules_configuration['easyspid'].get('DbMaster','application_name')))
+
+pool_settings = {'max_conn': globalsObj.modules_configuration['easyspid'].getint('dbpool','max_conn'),
+                 'min_conn': globalsObj.modules_configuration['easyspid'].getint('dbpool','min_conn')}
+
+# inizializza Db object e pool
+logging.getLogger(__name__).info('Initiating easyspid DB resource ...')
+globalsObj.DbConnections['samlDb'] = database.Database(dsnMaster)
+globalsObj.DbConnections['samlDb'].stmts = easyspid.lib.statements.stmts
+globalsObj.DbConnections['samlDb'].query = easyspid.lib.statements.query
+globalsObj.ioloop.run_until_complete(globalsObj.DbConnections['samlDb'].init_pool(pool_settings,
                                init = globalsObj.DbConnections['samlDb'].prepare_statements))
-globalsObj.DbConnections['samlDb'].set_pool(pool)
+logging.getLogger(__name__).debug('easyspid DB poll loaded ...')
 
 # inizializza dB object
 #globalsObj.DbConnections['samlDb'] = easyspid.lib.database.Database()
@@ -147,7 +168,12 @@ async def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.B
 
             elif idp_metadata['error'] > 0:
                 result['error'] = 1
-                response_obj = ResponseObj(debugMessage="PostgreSQL error code: %s" % idp_metadata['result'].sqlstate,
+
+                sqlstate = "?"
+                if hasattr(idp_metadata['result'], 'sqlstate'):
+                    sqlstate = idp_metadata['result'].sqlstate
+
+                response_obj = ResponseObj(debugMessage="PostgreSQL error code: %s" % sqlstate,
                             httpcode=500,
                             devMessage=("PostgreSQL error message: %s" % idp_metadata['result'].message))
                 response_obj.setError('easyspid105')
@@ -162,7 +188,12 @@ async def spSettings(cod_sp, cod_idp = None, binding= OneLogin_Saml2_Constants.B
 
     elif sp_settings['error'] > 0:
         result['error'] = 1
-        response_obj = ResponseObj(debugMessage="PostgreSQL error code: %s" % sp_settings['result'].sqlstate,
+
+        sqlstate = "?"
+        if hasattr(sp_settings['result'], 'sqlstate'):
+            sqlstate = sp_settings['result'].sqlstate
+
+        response_obj = ResponseObj(debugMessage="PostgreSQL error code: %s" % sqlstate,
                     httpcode=500,
                     devMessage=("PostgreSQL error message: %s" % sp_settings['result'].message))
         response_obj.setError('easyspid105')
@@ -240,7 +271,7 @@ def get_signature_cert(xmlData):
             return tmp
 
         else:
-            raise Exception('Could not validate certificate: No Signatire node found.')
+            raise Exception('Could not validate certificate: No Signature node found.')
 
 def calcCertFingerprint(x509cert, alg):
     result = {'error':0, 'result': None}

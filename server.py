@@ -20,6 +20,7 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 import asyncio
 from mutornadomon.config import initialize_mutornadomon
 import signal
+import configparser
 
 """
 Load default logging file config
@@ -39,6 +40,7 @@ globalsObj.configuration = commonlib.configure(globalsObj.CONFIG_FILE_PATH)
 globalsObj.ws_configuration = commonlib.configure(globalsObj.configuration.get('wspath','conf'))
 globalsObj.errors_configuration = commonlib.configure(globalsObj.configuration.get('errors','conf'))
 globalsObj.configuration = commonlib.configure(globalsObj.cmdLineoOptions.filename, globalsObj.configuration)
+globalsObj.modules_configuration = dict()
 
 if os.path.exists(os.path.join(globalsObj.rootFolder, globalsObj.configuration.get('Application','modules_dir'))):
     globalsObj.modules_basedir = os.path.join(globalsObj.rootFolder, globalsObj.configuration.get('Application','modules_dir'))
@@ -54,7 +56,7 @@ else:
 
 
 """
-scan module dir to load modules default logging file
+scan modules dir to load modules default configuration and logging files
 """
 modules_to_import = list()
 with os.scandir(globalsObj.modules_basedir) as it:
@@ -62,14 +64,25 @@ with os.scandir(globalsObj.modules_basedir) as it:
         if not module.name.startswith('.') and not module.name.startswith('_') and module.is_dir():
             tmp  = {'from': module.name+'.handlers', 'import': list()}
 
+            # logging
             try:
                 fname = os.path.join(globalsObj.modules_basedir, module.name, 'conf', 'logging.ini')
                 if os.path.isfile(fname):
                     globalsObj.loggingConfig = commonlib.incrementalIniFile(fname, globalsObj.loggingConfig)
-                    #logging.getLogger(__name__).info("Read default logging module file %s" % (fname))
             except Exception as exc:
                 pass
-                    #logging.getLogger('root').error('Errore nel caricamento della configurazione di logging' + repr(exc))
+
+            # conf
+            try:
+                fname = os.path.join(globalsObj.modules_basedir, module.name, 'conf', module.name+'.ini')
+                if os.path.isfile(fname):
+                    globalsObj.modules_configuration[module.name] = commonlib.configure(fname)
+
+                if globalsObj.configuration.has_option(module.name,'conf'):
+                    globalsObj.modules_configuration[module.name] = commonlib.configure(globalsObj.configuration.get(module.name,'conf'),
+                                        globalsObj.modules_configuration[module.name])
+            except Exception as exc:
+                pass
 
             with os.scandir(os.path.join(module.path, 'handlers')) as it2:
                 for module2 in it2:
@@ -120,6 +133,27 @@ for module in modules_to_import:
     logging.getLogger(__name__).info("Loaded module %s.%s" % (module['from'], module['import']))
     exec("from %s import %s" % (module['from'], module['import']))
 
+"""
+load mudules error messages in globalObjects
+"""
+with os.scandir(globalsObj.modules_basedir) as it:
+    for module in it:
+        try:
+            fname = os.path.join(globalsObj.modules_basedir, module.name, 'conf', 'errors.ini')
+            if os.path.isfile(fname):
+                module_error_configuration = commonlib.configure(fname)
+
+            for i, val in enumerate(module_error_configuration.sections()):
+                if val != 'conf':
+                    try:
+                        globalsObj.errors_configuration.add_section(val)
+                        tempDict = dict(module_error_configuration.items(val))
+                        for j, val2 in enumerate(tempDict.keys()):
+                            globalsObj.errors_configuration.set(val, val2, tempDict[val2])
+                    except configparser.DuplicateSectionError as error:
+                        logging.getLogger(__name__).warning("Error loading " + module.name + " error messages: " + error.message )
+        except Exception as exc:
+            pass
 
 class WebApp(tornado.web.Application):
     def __init__(self, configuration, ws_configuration_list):

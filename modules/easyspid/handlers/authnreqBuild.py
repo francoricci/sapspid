@@ -5,7 +5,6 @@ import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
 import logging
-from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
@@ -16,6 +15,7 @@ from easyspid.handlers.buildMetadata import buildMetadatahandler
 import xml.etree.ElementTree
 from easyspid.lib.authn_request import Saml2_Authn_Request
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
+import commonlib
 
 class authnreqBuildhandler(easyspidHandler):
 
@@ -24,7 +24,7 @@ class authnreqBuildhandler(easyspidHandler):
 
     #get
     async def get(self, sp):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.easyspid_originIP_header)
         self.remote_ip = x_real_ip or self.request.remote_ip
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
@@ -55,7 +55,7 @@ class authnreqBuildhandler(easyspidHandler):
         asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
         super().writeResponse(response_obj)
 
-
+    @commonlib.inner_log
     def buildAthnReq(self, sp_settings, attributeIndex, sp_metadata = None, signed = True):
 
         try:
@@ -131,7 +131,7 @@ class authnreqBuildhandler(easyspidHandler):
                 else:
                     response_obj = ResponseObj(httpcode=500, debugMessage=wrtAuthn['result'])
                     response_obj.setError("easyspid105")
-                    logging.getLogger(__name__).error('Exception',exc_info=True)
+                    logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
             elif sp_settings['error'] == 0 and sp_settings['result'] == None:
                 response_obj = ResponseObj(httpcode=404)
@@ -145,19 +145,11 @@ class authnreqBuildhandler(easyspidHandler):
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500)
-            response_obj.setError(inst.code)
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('easyspid/buildAthnReq handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         return response_obj

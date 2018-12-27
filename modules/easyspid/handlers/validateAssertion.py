@@ -6,12 +6,12 @@ import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
 import logging
-from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
 from easyspid.lib.utils import Saml2_Settings, waitFuture
+import commonlib
 
 class validateAssertiondHandler(easyspidHandler):
 
@@ -20,7 +20,7 @@ class validateAssertiondHandler(easyspidHandler):
 
     #post
     async def post(self):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.easyspid_originIP_header)
         self.remote_ip = x_real_ip or self.request.remote_ip
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
@@ -32,6 +32,7 @@ class validateAssertiondHandler(easyspidHandler):
         super().writeResponse(response_obj)
 
 
+    @commonlib.inner_log
     def validateAssertion(self):
 
         try:
@@ -40,7 +41,7 @@ class validateAssertiondHandler(easyspidHandler):
             if temp.error["code"] == 2:
                 response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
                 response_obj.setError('400')
-                logging.getLogger(__name__).error('Validation error. Json input error')
+                logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Validation error. Json input error')
                 return response_obj
 
             elif temp.error["code"] > 0:
@@ -50,7 +51,7 @@ class validateAssertiondHandler(easyspidHandler):
             assertion = temp.request['assertion']
 
             if prvd != "":
-                task  = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_signature('%s')" % prvd))
+                task  = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("get_signature('%s')" % prvd), globalsObj.ioloop)
                 #assert not task.done()
                 #prvdSignature = task.result()
                 prvdSignature = easyspid.lib.utils.waitFuture(task)
@@ -80,6 +81,11 @@ class validateAssertiondHandler(easyspidHandler):
                 response_obj.setError('easyspid104')
                 response_obj.setResult(assertionChk = chk)
 
+            elif chk['assertionName'] == 'AuthnRequest' and chk['signCheck'] is None:
+                response_obj = ResponseObj(httpcode=200)
+                response_obj.setError('easyspid119')
+                response_obj.setResult(assertionChk = chk)
+
             elif not chk['signCheck']:
                 response_obj = ResponseObj(httpcode=401)
                 response_obj.setError('easyspid106')
@@ -90,24 +96,17 @@ class validateAssertiondHandler(easyspidHandler):
                 response_obj.setError('200')
                 response_obj.setResult(assertionChk = chk)
 
+
         except tornado.web.MissingArgumentError as error:
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500,  debugMessage=inst)
-            response_obj.setError(inst.code)
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500, debugMessage=inst)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('easyspid/validateAssertion handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         response_obj.setID(temp.id)
         return response_obj

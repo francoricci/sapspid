@@ -5,10 +5,10 @@ import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
 import logging
-from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
+import commonlib
 
 class getProvidershandler(easyspidHandler):
 
@@ -17,7 +17,7 @@ class getProvidershandler(easyspidHandler):
 
     #get
     async def get(self, active = True):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.easyspid_originIP_header)
         #self.remote_ip = x_real_ip or self.request.remote_ip
         #self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
@@ -26,7 +26,7 @@ class getProvidershandler(easyspidHandler):
         asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
         super().writeResponse(response_obj)
 
-
+    @commonlib.inner_log
     async def getProviders(self, active = True):
         try:
             sp_metadata  = await self.dbobjSaml.execute_statment("get_providers(%s)" % active)
@@ -55,21 +55,12 @@ class getProvidershandler(easyspidHandler):
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500)
-            response_obj.setError(inst.code)
-            #responsejson = response_obj.jsonWrite()
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('easyspid/getProviders handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         return response_obj
 

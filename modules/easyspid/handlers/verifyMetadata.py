@@ -6,12 +6,12 @@ import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
 import logging
-from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
 from easyspid.lib.utils import Saml2_Settings
+import commonlib
 
 class verifyMetadatahandler(easyspidHandler):
 
@@ -20,7 +20,7 @@ class verifyMetadatahandler(easyspidHandler):
 
     #post
     async def post(self, sp):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.easyspid_originIP_header)
         self.remote_ip = x_real_ip or self.request.remote_ip
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
@@ -32,7 +32,7 @@ class verifyMetadatahandler(easyspidHandler):
         asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
         super().writeResponse(response_obj)
 
-
+    @commonlib.inner_log
     def verifySpMetadata(self, sp_settings):
         try:
 
@@ -40,7 +40,7 @@ class verifyMetadatahandler(easyspidHandler):
             if temp.error["code"] == 2:
                 response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
                 response_obj.setError('400')
-                logging.getLogger(__name__).error('Validation error. Json input error')
+                logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Validation error. Json input error')
                 return response_obj
 
             elif temp.error["code"] > 0:
@@ -85,21 +85,12 @@ class verifyMetadatahandler(easyspidHandler):
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500)
-            response_obj.setError(inst.code)
-            #responsejson = response_obj.jsonWrite()
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('easyspid/verifySpMetadata handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         response_obj.setID(temp.id)
         return response_obj

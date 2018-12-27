@@ -6,8 +6,7 @@ import tornado.gen
 import tornado.ioloop
 import tornado.concurrent
 import logging
-from lib.customException import ApplicationException
-import re
+import commonlib
 from jwtoken.handlers.jwtokenhandler import jwtokenHandler
 import asyncio
 import globalsObj
@@ -35,6 +34,7 @@ class verifyHandler(jwtokenHandler):
         asyncio.ensure_future(self.writeLog(response_obj), loop = globalsObj.ioloop)
         self.writeResponse(response_obj)
 
+    @commonlib.inner_log
     async def verify(self):
         try:
             if self.request.method == 'GET':
@@ -47,7 +47,7 @@ class verifyHandler(jwtokenHandler):
                 if temp.error["code"] == 2:
                     response_obj = ResponseObj(debugMessage=temp.error["message"], httpcode=400)
                     response_obj.setError('400')
-                    logging.getLogger(__name__).error('Validation error. Json input error')
+                    logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Validation error. Json input error')
                     return response_obj
 
                 elif temp.error["code"] > 0:
@@ -72,29 +72,19 @@ class verifyHandler(jwtokenHandler):
                     response_obj.setError('jwtoken100')
 
             elif verifica['error'] > 0:
-                response_obj = ResponseObj(debugMessage=("PostgreSQL error code: %s" % verifica['result'].sqlstate),
-                        httpcode=500,
-                        devMessage=("PostgreSQL error message: %s" % verifica['result'].message))
+                response_obj = ResponseObj(debugMessage=verifica['result'], httpcode=500)
                 response_obj.setError('jwtoken105')
 
         except tornado.web.MissingArgumentError as error:
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500)
-            response_obj.setError(inst.code)
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('jwt/verify handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         if  self.request.method == 'POST':
             response_obj.setID(temp.id)

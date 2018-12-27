@@ -4,6 +4,7 @@ import os
 import logging
 import argparse
 import re
+import inspect
 
 """ read config file """
 def configure(default_file, configParser = None):
@@ -175,3 +176,38 @@ def incrementalIniFile(newIni, oldIni = None, rawParser = True, separator = ',',
 def match_host(request):
     xff = request.headers.get('X-Forwarded-For', None)
     return True
+
+# decorator to mange log inside def
+def inner_log(func):
+
+    # check coorutine
+    if inspect.iscoroutine(func) or inspect.iscoroutinefunction(func):
+        async def wrapper(*args, **kwargs):
+            func_info = inspect.getmembers(func)
+            nome = func_info[23][1] + "." + func_info[27][1]
+            parameters = inspect.formatargvalues(*inspect.getargvalues(inspect.currentframe()))
+            message = func_info[24][1] + " started with pramaters " + parameters
+            logging.getLogger(nome).info(message)
+
+            response = await func(*args, **kwargs)
+
+            message = func_info[24][1] + " ended"
+            logging.getLogger(nome).info(message)
+
+            return response
+    else:
+        def wrapper(*args, **kwargs):
+            func_info = inspect.getmembers(func)
+            nome = func_info[23][1] + "." + func_info[24][1]
+            parameters = inspect.formatargvalues(*inspect.getargvalues(inspect.currentframe()))
+            message = func_info[24][1] + " started with pramaters " + parameters
+            logging.getLogger(nome).info(message)
+
+            response = func(*args, **kwargs)
+
+            message = func_info[24][1] + " ended"
+            logging.getLogger(nome).info(message)
+
+            return response
+
+    return wrapper

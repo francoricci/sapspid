@@ -5,12 +5,12 @@ import tornado.ioloop
 import tornado.concurrent
 import tornado.httpclient
 import logging
-from lib.customException import ApplicationException
 import asyncio
 from easyspid.handlers.easyspidhandler import easyspidHandler
 import globalsObj
 import easyspid.lib.easyspid
 from easyspid.lib.utils import Saml2_Settings, waitFuture
+import commonlib
 
 class buildMetadatahandler(easyspidHandler):
 
@@ -19,7 +19,7 @@ class buildMetadatahandler(easyspidHandler):
 
     #get
     async def get(self, sp):
-        x_real_ip = self.request.headers.get("X-Real-IP")
+        x_real_ip = self.request.headers.get(globalsObj.easyspid_originIP_header)
         self.remote_ip = x_real_ip or self.request.remote_ip
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.set_default_headers()
@@ -32,6 +32,7 @@ class buildMetadatahandler(easyspidHandler):
         super().writeResponse(response_obj)
 
     @staticmethod
+    @commonlib.inner_log
     def makeMetadata(sp_settings):
 
         if sp_settings['error'] == 0 and sp_settings['result'] is not None:
@@ -53,6 +54,7 @@ class buildMetadatahandler(easyspidHandler):
 
         return response_obj
 
+    @commonlib.inner_log
     def buildMetadata(self, sp_settings, dbSave = True):
 
         try:
@@ -67,10 +69,6 @@ class buildMetadatahandler(easyspidHandler):
                     task = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_statment("write_assertion('%s', '%s', %s, '%s')" %
                         (metadata.replace("'", "''"), sp, 'NULL', self.remote_ip)), globalsObj.ioloop)
                     wrtMetada = waitFuture(task)
-
-                    #task1 = asyncio.run_coroutine_threadsafe(self.dbobjSaml.execute_query(self.dbobjSaml.query['chk_metadata_validity']['sql'],
-                    #                                                                      sp), globalsObj.ioloop)
-                    #chk_metadata = waitFuture(task1)
 
                     if wrtMetada['error'] == 0:
 
@@ -91,7 +89,7 @@ class buildMetadatahandler(easyspidHandler):
                     else:
                         response_obj = ResponseObj(httpcode=500, debugMessage=wrtMetada['result'])
                         response_obj.setError("easyspid105")
-                        logging.getLogger(__name__).error('Exception',exc_info=True)
+                        logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
                 else:
                     response_obj = ResponseObj(httpcode=200)
                     response_obj.setError('200')
@@ -105,20 +103,12 @@ class buildMetadatahandler(easyspidHandler):
             response_obj = ResponseObj(debugMessage=error.log_message, httpcode=error.status_code,
                                        devMessage=error.log_message)
             response_obj.setError(str(error.status_code))
-            logging.getLogger(__name__).error('%s'% error,exc_info=True)
-
-        except ApplicationException as inst:
-            response_obj = ResponseObj(httpcode=500)
-            response_obj.setError(inst.code)
-            logging.getLogger(__name__).error('Exception',exc_info=True)
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('%s'% error,exc_info=True)
 
         except Exception as inst:
             response_obj = ResponseObj(httpcode=500)
             response_obj.setError('500')
-            logging.getLogger(__name__).error('Exception',exc_info=True)
-
-        finally:
-            logging.getLogger(__name__).warning('easyspid/makeMetadata handler executed')
+            logging.getLogger(type(self).__module__+"."+type(self).__qualname__).error('Exception',exc_info=True)
 
         return response_obj
 
