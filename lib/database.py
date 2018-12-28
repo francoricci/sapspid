@@ -1,7 +1,7 @@
 import asyncpg
 import jsonpickle
-import inspect
 import logging
+import inspect
 
 class Database(object):
 
@@ -15,10 +15,14 @@ class Database(object):
         self.pool = pool
 
     async def acquire(self):
-        return await self.pool.acquire()
+        con = await self.pool.acquire()
+        logging.getLogger(__name__).debug("Acquired connection: %s" % (repr(con)))
+        return con
 
     async def release(self, conn):
-        return await self.pool.release(conn)
+        await self.pool.release(conn)
+        logging.getLogger(__name__).debug("Released connection")
+        return
 
     async def prepare_statements(self, conn):
 
@@ -47,6 +51,7 @@ class Database(object):
         tr = conn.transaction()
         await tr.start()
         await conn.execute("SET application_name to '%s'" % set_application_name(application_name))
+        logging.getLogger(__name__).info("Started transaction set application_name to %s" % application_name)
 
         try:
             record = await conn.fetch("EXECUTE "+ statment)
@@ -60,11 +65,14 @@ class Database(object):
                 output = {'error':0, 'result': None}
 
             await tr.commit()
+            logging.getLogger(__name__).info("EXECUTED %s" % statment)
+            logging.getLogger(__name__).info("Committed transaction")
 
         except Exception as error:
             message =  self.print_asyncpg_error(error)
             await tr.rollback()
             output = {'error':1, 'result':message}
+            logging.getLogger(__name__).error("rollback!")
 
         finally:
             if release:
@@ -82,6 +90,7 @@ class Database(object):
         tr = conn.transaction()
         await tr.start()
         await conn.execute("SET application_name to '%s'" % set_application_name(application_name))
+        logging.getLogger(__name__).info("Started transaction set application_name to %s" % application_name)
 
         try:
             record = await conn.fetch(sql, *sqlargs)
@@ -95,6 +104,8 @@ class Database(object):
                 output = {'error':0, 'result': None}
 
             await tr.commit()
+            logging.getLogger(__name__).info("Run query \"%s\", parameters: (%s)" % (sql, ','.join(sqlargs)))
+            logging.getLogger(__name__).info("Committed transaction" )
 
         except Exception as error:
             message = self.print_asyncpg_error(error)
