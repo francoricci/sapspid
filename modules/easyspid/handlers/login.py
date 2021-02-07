@@ -31,7 +31,7 @@ class loginhandler(authnreqBuildhandler):
         self.set_default_headers()
 
         bindingMap = {'redirect':OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
-                          'post': OneLogin_Saml2_Constants.BINDING_HTTP_POST}
+                      'post': OneLogin_Saml2_Constants.BINDING_HTTP_POST}
         idp = self.get_argument('idp')
         attributeIndex = self.get_argument('attrindex')
         binding = self.get_argument('binding')
@@ -51,6 +51,7 @@ class loginhandler(authnreqBuildhandler):
             self.set_header('Content-Type', 'text/html; charset=UTF-8')
             self.set_header('Location', response_obj.result.redirectTo)
             self.set_status(303)
+            self.write("Waiting for redirect...")
             self.finish()
             return
 
@@ -149,11 +150,11 @@ class loginhandler(authnreqBuildhandler):
                     idpsso = idp_settings['singleSignOnService']['url']
 
                     try:
-                        with open(os.path.join(globalsObj.modules_basedir, globalsObj.easyspid_postFormPath), 'r') as myfile:
-                            post_form = myfile.read().replace('\n', '')
+                        with open(os.path.join(globalsObj.modules_basedir, globalsObj.easyspid_postFormPath), 'rb') as myfile:
+                            post_form = myfile.read().decode("utf-8").replace('\n', '')
                     except:
-                        with open(globalsObj.easyspid_postFormPath, 'r') as myfile:
-                            post_form = myfile.read().replace('\n', '')
+                        with open(globalsObj.easyspid_postFormPath, 'rb') as myfile:
+                            post_form = myfile.read().decode("utf-8").replace('\n', '')
 
                     post_form = post_form.replace("%IDPSSO%",idpsso)
                     post_form = post_form.replace("%AUTHNREQUEST%",saml_request_signed)
