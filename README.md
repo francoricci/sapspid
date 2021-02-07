@@ -39,7 +39,7 @@ In particolare:
 * PostgreSQL 9.6
 * PostgreSQL 
 * PL/Python
-* POstgreSQL uuid-ossp extension
+* PostgreSQL uuid-ossp extension
 * uvloop (opzionale)
 * six
 * psutil
