@@ -37,6 +37,8 @@ globalsObj.easyspid_checkInResponseTo = easyspid_file_configuration.getboolean('
 globalsObj.easyspid_checkCertificateValidity = easyspid_file_configuration.getboolean('Response','checkCertificateValidity')
 globalsObj.easyspid_checkCertificateAllowed = easyspid_file_configuration.getboolean('Response','checkCertificateAllowed')
 globalsObj.easyspid_originIP_header = easyspid_file_configuration.get('proxy','originIP_header')
+globalsObj.easyspid_default_url = easyspid_file_configuration.get('Errors','default_url')
+globalsObj.easyspid_saml_errors = easyspid_file_configuration.get('Errors','saml_errors')
 
 
 # istanzia tutte le sezioni degli errori nel file globalsObj
