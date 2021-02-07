@@ -1,0 +1,46 @@
+{
+  "SAML": [
+    {
+      "statusCode": "urn:oasis:names:tc:SAML:2.0:status:Responder",
+      "subStatusCode": "urn:oasis:names:tc:SAML:2.0:statuss:AuthnFailed",
+      "statusMessage": "ErrorCode nr19",
+      "ITMessage": "Superato massimo numero di tentativi permessi secondo le policy adottate. Autenicazione fallita",
+      "ENMessage": "Max numbers of authentication attempts exeded. Authentication failed"
+    },
+    {
+      "statusCode": "urn:oasis:names:tc:SAML:2.0:status:Responder",
+      "subStatusCode": "urn:oasis:names:tc:SAML:2.0:statuss:AuthnFailed",
+      "statusMessage": "ErrorCode nr20",
+      "ITMessage": "Livello di sicurezza richiesto incompatibile con le credenziali dell'utente",
+      "ENMessage": "Security level requested incompatible whith user's credentials"
+    },
+    {
+      "statusCode": "urn:oasis:names:tc:SAML:2.0:status:Responder",
+      "subStatusCode": "urn:oasis:names:tc:SAML:2.0:statuss:AuthnFailed",
+      "statusMessage": "ErrorCode nr21",
+      "ITMessage": "Timeout durante l’autenticazione. SL’operazione di autenticazione deve essere completata entro un determinato periodo di tempo",
+      "ENMessage": "Authentication timeout. Authentication must be completed in a fixed time"
+    },
+    {
+      "statusCode": "urn:oasis:names:tc:SAML:2.0:status:Responder",
+      "subStatusCode": "urn:oasis:names:tc:SAML:2.0:statuss:AuthnFailed",
+      "statusMessage": "ErrorCode nr22",
+      "ITMessage": "Consenso all’invio dati negato. L’operazione di autenticazione richiede il consenso all'invio dei dati",
+      "ENMessage": "Consent denied to send data. To complete authentication is necessary give consent to send data"
+    },
+    {
+      "statusCode": "urn:oasis:names:tc:SAML:2.0:status:Responder",
+      "subStatusCode": "urn:oasis:names:tc:SAML:2.0:statuss:AuthnFailed",
+      "statusMessage": "ErrorCode nr23",
+      "ITMessage": "Identità sospesa/revocata o con credenziali bloccate",
+      "ENMessage": "Identity expired, locked or revoked"
+    },
+    {
+      "statusCode": "urn:oasis:names:tc:SAML:2.0:status:Responder",
+      "subStatusCode": "urn:oasis:names:tc:SAML:2.0:statuss:AuthnFailed",
+      "statusMessage": "ErrorCode nr25",
+      "ITMessage": "Autenticazione annullata dall’utente",
+      "ENMessage": "Authentication canceled by user"
+    }
+  ]
+}

@@ -16,7 +16,8 @@ import asyncio
 import globalsObj
 import time
 import xmlsec
-
+import os
+import jsonpickle
 
 class Saml2_Settings(OneLogin_Saml2_Settings):
 
@@ -157,8 +158,8 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
                 cert_metadata_file = self._OneLogin_Saml2_Settings__paths['cert'] + cert_file_name
 
                 try:
-                    with open(key_metadata_file, 'r') as f_metadata_key:
-                        key_metadata = f_metadata_key.read()
+                    with open(key_metadata_file, 'rb') as f_metadata_key:
+                        key_metadata = f_metadata_key.read().decode("utf-8")
                 except IOError:
                     raise OneLogin_Saml2_Error(
                         'Private key file not readable: %s',
@@ -167,8 +168,8 @@ class Saml2_Settings(OneLogin_Saml2_Settings):
                     )
 
                 try:
-                    with open(cert_metadata_file, 'r') as f_metadata_cert:
-                        cert_metadata = f_metadata_cert.read()
+                    with open(cert_metadata_file, 'rb') as f_metadata_cert:
+                        cert_metadata = f_metadata_cert.read().decode("utf-8")
                 except IOError:
                     raise OneLogin_Saml2_Error(
                         'Public cert file not readable: %s',
@@ -425,21 +426,22 @@ def validateAssertion(xml, fingerprint=None, fingerprintalg=None):
         result['certValidity'] = None
         result['certAllowed'] = None
 
-    try:
-        OneLoginResponse.validate_timestamps(raise_exceptions=True)
-        result['chkTime'] = True
+    if assertionName == 'Response':
+        try:
+            OneLoginResponse.validate_timestamps(raise_exceptions=True)
+            result['chkTime'] = True
 
-    except OneLogin_Saml2_ValidationError as error:
-        result['chkTime'] = False
-        result['error'] = 3
+        except OneLogin_Saml2_ValidationError as error:
+            result['chkTime'] = False
+            result['error'] = 3
 
-    try:
-        OneLoginResponse.check_status()
-        result['chkStatus'] = True
+        try:
+            OneLoginResponse.check_status()
+            result['chkStatus'] = True
 
-    except OneLogin_Saml2_ValidationError as error:
-        result['chkStatus'] = False
-        result['error'] = 3
+        except OneLogin_Saml2_ValidationError as error:
+            result['chkStatus'] = False
+            result['error'] = 3
 
     try:
         result['serviceAttributes'] = OneLoginResponse.get_attributes()
@@ -464,3 +466,57 @@ def waitFuture(future, timeout=0):
             raise asyncio.CancelledError
 
     return future.result()
+
+async def getResponseError(xmlTreeRespponse, sp = None, namespace = None, errorsKey = 'SAML'):
+
+    result = {'error':'0', 'status': None, 'service': None}
+
+    statusCode = xmlTreeRespponse.find('md0:Status/md0:StatusCode', namespace).attrib['Value'].strip()
+    subStatusCode = xmlTreeRespponse.find('md0:Status/md0:StatusCode/md0:StatusCode', namespace).attrib['Value'].strip()
+    statusMessage = xmlTreeRespponse.find('md0:Status/md0:StatusMessage', namespace).text.strip()
+
+    #laod SAML errors
+    try:
+        with open(os.path.join(globalsObj.modules_basedir, globalsObj.easyspid_saml_errors), 'rb') as myfile:
+            saml_errors = jsonpickle.decode(myfile.read().decode("utf-8"))
+    except:
+        with open(globalsObj.easyspid_saml_errors, 'rb') as myfile:
+            saml_errors = jsonpickle.decode(myfile.read().decode("utf-8"))
+
+    if sp is not None:
+        spSettings = await globalsObj.DbConnections['samlDb'].execute_statment("get_sp_settings('%s')" % sp)
+
+        if spSettings['error'] == 0 and spSettings['result'] != None:
+            if 'singleErrorService' in spSettings['result'][0]['settings']['sp']:
+                service = spSettings['result'][0]['settings']['sp']['singleErrorService']['url']
+                result['service'] = service
+
+
+            error = next((item for item in saml_errors[errorsKey] if item['statusMessage'] == statusMessage), False)
+            if not error:
+                userMessage = statusCode + ", " + subStatusCode + ", " + statusMessage
+                result['status'] = {'statusCode':statusCode, 'subStatusCode':subStatusCode,
+                    'statusMessage': statusMessage, "ITMessage": userMessage, "ENMessage": userMessage}
+            else:
+                result['status'] = error
+
+            return result
+
+        elif spSettings['error'] == 0 and spSettings['result'] == None:
+            result['error'] = 'easyspid114'
+            return result
+
+        elif spSettings['error'] > 0:
+            result['error'] = spSettings['error']
+            return result
+
+    else:
+        service = globalsObj.easyspid_default_url
+        result['status'] = {'statusCode':statusCode, 'subStatusCode':subStatusCode, 'statusMessage': statusMessage}
+        result['service'] = service
+        return result
+
+class goExit(Exception):
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
