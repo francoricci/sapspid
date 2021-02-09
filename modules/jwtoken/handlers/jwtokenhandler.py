@@ -12,7 +12,7 @@ class jwtokenHandler(RequestHandler):
 
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header('Access-Control-Allow-Methods', ' POST, GET, OPTIONS')
+        self.set_header('Access-Control-Allow-Methods', '*')
 
     # gestione errore generico
     def write_error(self, status_code, **kwargs):
@@ -33,11 +33,6 @@ class jwtokenHandler(RequestHandler):
         getResponse.setError('3')
         getResponse.setResult()
         self.write(getResponse.jsonWrite())
-        self.finish()
-
-    def options(self):
-        # no body
-        self.set_status(204)
         self.finish()
 
     def writeResponse(self, response_obj):
