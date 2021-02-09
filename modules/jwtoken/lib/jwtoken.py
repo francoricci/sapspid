@@ -1,6 +1,5 @@
 import globalsObj
 import commonlib as commonlib
-#import jwtoken.lib.database
 import database
 import jwtoken.lib.statements
 import os
@@ -32,10 +31,10 @@ for i, val in enumerate(jwtoken_error_configuration.sections()):
             globalsObj.errors_configuration.set(val, val2, tempDict[val2])
 
 ## crea le connessini con il DB
-# try:
-#     globalsObj.DbConnections
-# except Exception as error:
-#     globalsObj.DbConnections = dict()
+try:
+     globalsObj.DbConnections
+except Exception as error:
+     globalsObj.DbConnections = dict()
 
 
 # dsnMaster = ("postgres://%s:%s@%s:%s/%s?application_name=%s" % (jwtoken_file_configuration.get('DbMaster','user'),
