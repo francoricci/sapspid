@@ -20,8 +20,8 @@ Poiché sapspid è un middleware, può generare problemi di sicurezza dovuti al 
 4. sapspid -> SP: ES elabora la SAML Response ed invoca un servizio del SP per fornire le informazioni di autenticazione.
 
 L’SP concede accesso ai propri servizi a seguito dell’invio da parte di ES di un messaggio di corretta autenticazione dell’utente su un IdP (SAML response). Poiché le fasi 1 e 4 non sono a conoscenza delle fasi 2 e 3, è possibile che un terzo non autorizzato invii ad SP un messaggio “fake” di autenticazione ed ottenga accesso illegale ai servizi di SP.
-Affinché SP possa essere sicuro del mittente e che il messaggio ricevuto derivi da una reale richiesta iniziata nella fase 1, è sufficiente l’utilizzo di un opportuno “token” generato da sapspid nella fase 3 (quando sapspid riceve la SAML response dell’IdP) e inviato da sapspid a SP nella fase 4. 
-Un terzo che, cercasse di inviare un messaggio “fake” a SP non potrebbe generare un token valido permettendo a SP di rigettare la richiesta di accesso. 
+Affinché SP possa essere sicuro del mittente e che il messaggio ricevuto derivi da una reale richiesta iniziata nella fase 1, è sufficiente l’utilizzo di un opportuno “token” generato da sapspid nella fase 3 (quando sapspid riceve la SAML response dell’IdP) e inviato da sapspid a SP nella fase 4.
+Un terzo che, cercasse di inviare un messaggio “fake” a SP non potrebbe generare un token valido permettendo a SP di rigettare la richiesta di accesso.
 ## REQUISITI
 Sapspid è scritto in Python ed utilizza un Database Postgresql per meomoriazzare le asserzioni SAML ed i parametri di configurazione del SP.
 In particolare:
@@ -34,10 +34,10 @@ In particolare:
 * PyJWT 1.5.2
 * jsonschema 2.6.0
 * cryptography 1.7.2
-* python3-saml 1.2.6
+* python3-saml 1.5.0
 * defusedxml 0.5.0
 * PostgreSQL 9.6
-* PostgreSQL 
+* PostgreSQL
 * PL/Python
 * PostgreSQL uuid-ossp extension
 * uvloop (opzionale)
