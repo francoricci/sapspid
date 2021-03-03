@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--[if lte IE 8]>
+<html class="no-js lt-ie9" lang="en" id="ng-app" ng-app="phoenixApp"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js ng-scope" ng-app="phoenixApp" id="ng-app"><!--<![endif]--><head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <!-- <meta http-equiv="x-ua-compatible" content="IE=edge">  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,width=device-width,user-scalable=no">
+  <meta name="description" content="">
+  <meta name="author" content="InfoSapienza">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="icon" href="https://www.studenti.uniroma1.it/phoenix/favicon.ico">
+  <title>SAML Errors</title>
+  <!-- Bootstrap core CSS -->
+  <link href="styles/bootstrap.css" rel="stylesheet">
+  <link href="styles/sapienza.css" rel="stylesheet">
+  <script src="scripts/error.js"></script>
+</head>
+
+<body block-ui="main" class="ng-scope block-ui block-ui-anim-fade" aria-busy="false">
+
+
+
+  <div>
+
+    <div class="navbar navbar-fixed-top navbar-inverse sapienza-bg" role="navigation" ng-style="{'backgroundImage': flameStyle}">
+      <div class="container-fluid">
+        <div class="navbar-header col-xs-3">
+          <!-- ngIf: isLogged -->
+
+          <a class="navbar-brand col-xs-4 " id="logo" href="https://www.uniroma1.it/" style="  margin-left: -20px;">
+            <img src="images/logo.svg" alt="Logo Sapienza" style="margin-left: 10px;" class="logo hidden-xs">
+            <img src="images/logo.svg" alt="Logo Sapienza" style="margin-left: 10px;max-height: 45px;" class="logo visible-xs">
+          </a>
+        </div>
+      </div>
+      <!-- /.container -->
+    </div>
+
+
+    <div id="wrapper">
+
+<div id="page-content-wrapper" class="page-content-wrapper ng-scope" ng-controller="mainController">
+  <!--/span-->
+  <!-- Modal -->
+
+  <div class="container-fluid loginMargin" ng-class="{loginMargin: (!isLogged)}" ng-style="{position: fixMenuPrincipale ? 'fixed' : ''}">
+
+
+    <!-- ngView:  --><div id="main-content" ng-view="" class="ng-scope"><div id="loginbox" class="state-overview ng-scope" ng-controller="FpController as fp">
+    <div class="panel ">
+      <header class="panel-heading-login">SAML ERROR $http_error$</header>
+      <div class="panel-body panel-body-login">
+        <div class="col-md-12 control">
+          <h4>$ITMessage$</h4>
+          <h4>$ENMessage$</h4>
+          <br>
+          <button id="accordion" class="accordion" onclick="toggle()">Message Error Details</button>
+          <div id="panel1" class="panel1">
+            <h5>$statusCode$</h5>
+            <h5>$subStatusCode$</h5>
+            <h5>$statusMessage$</h5>
+          </div>
+
+          <br>
+        <div style="padding-top:5px; font-weight: bold; text-transform: uppercase;">
+          <a class="rosso-sapienza ng-binding" target="_blank" href="https://www.uniroma1.it/it/pagina-strutturale/studenti">BACK</a>
+        </div>
+        <br>
+      </div>
+      <!-- ngIf: authorized==false -->
+    </div>
+  </div>
+</div>
+</div>
+</div>
+<br>
+<br>
+</div>
+<!--/span-->
+</div>
+<!--/page content-->
+<footer class="site-footer hidden-xs navbar-fixed-bottom" ng-style="{'backgroundImage': flameStyle}">
+  <div class="text-right" style="margin-right: 15px; font-size: 9px;">
+    © Università&nbsp; degli Studi di Roma "La Sapienza" - Piazzale Aldo Moro 5, 00185 Roma T (+39)
+    06 49911 CF 80209930587 PI 02133771002
+  </div>
+</footer>
+<!--<![endif]-->
+</div>
+<!--/.container-->
+</div>
+<div id="ngProgress-container" class="ng-scope"><div id="ngProgress" style="background-color: rgb(255, 255, 255); color: rgb(255, 255, 255); height: 2px; width: 0%; opacity: 1;"></div></div><div block-ui-container="" class="block-ui-container ng-scope"><div class="block-ui-overlay"></div>
+<div class="block-ui-message-container" aria-live="assertive" aria-atomic="true">
+</div>
+  </div>
+</body>
+</html>
